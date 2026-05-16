@@ -242,25 +242,22 @@ function ColsSelect({ value, onChange }: { value: number; onChange: (n: number) 
 }
 
 function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  // Slider semantics: drag LEFT  → tiles shrink → more tiles per row
-  //                   drag RIGHT → tiles grow   → fewer tiles per row
-  //
-  // The slider value represents tile size (1 = smallest, MAX = biggest), which
-  // is the inverse of the cols count. So we invert when reading from / writing
-  // back to the cols state.
+  // Slider semantics: drag LEFT  → tiles grow   → fewer per row (cols↓)
+  //                   drag RIGHT → tiles shrink → more per row  (cols↑)
+  // Value === cols directly. Left icon is the "big tile" end; right is the
+  // dense-grid end.
   const MIN = 1;
   const MAX = 32;
-  const tileSize = MAX - value + MIN;
   return (
-    <div className="inline-flex items-center gap-1.5" title="Tile size — drag left for more tiles per row, right for bigger tiles">
-      <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
+    <div className="inline-flex items-center gap-1.5" title="Tile size — drag right to fit more tiles per row, left to grow them">
+      <Square size={11} className="text-zinc-500" aria-hidden />
       <input
         type="range"
         min={MIN}
         max={MAX}
         step={1}
-        value={tileSize}
-        onChange={(e) => onChange(MAX - Number(e.target.value) + MIN)}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
         aria-label="Tile size"
         aria-valuemin={MIN}
         aria-valuemax={MAX}
@@ -268,7 +265,7 @@ function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: numb
         aria-valuetext={`${value} columns`}
         className="h-1 w-32 accent-cyan-500 cursor-pointer"
       />
-      <Square size={11} className="text-zinc-500" aria-hidden />
+      <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
     </div>
   );
 }
