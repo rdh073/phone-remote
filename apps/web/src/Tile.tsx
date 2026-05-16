@@ -49,9 +49,9 @@ export function Tile({ serial, res, className, fill = false }: Props) {
   // disagrees with the actual click point on HiDPI / OS-cursor-scaled
   // displays). x/y are CSS pixels relative to the canvas top-left, so the
   // overlay always tracks the real pointer position regardless of DPR.
-  // size scales with the tile's rendered side — a wallboard thumbnail gets
-  // a small ring, a focused/fullscreen tile gets a bigger one.
-  const [pointerLocal, setPointerLocal] = useState<{ x: number; y: number; size: number } | null>(null);
+  // Fixed size (matches the original SVG-cursor diameter) — the operator
+  // values consistency over scaling per their feedback.
+  const [pointerLocal, setPointerLocal] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
     if (fill || !pauseOffscreenStreams) {
       setOffscreen(false);
@@ -202,8 +202,7 @@ export function Tile({ serial, res, className, fill = false }: Props) {
     // touchscreens, which looks broken).
     if (e.pointerType !== 'mouse' && e.buttons === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const size = Math.max(12, Math.min(28, Math.min(rect.width, rect.height) * 0.05));
-    setPointerLocal({ x: e.clientX - rect.left, y: e.clientY - rect.top, size });
+    setPointerLocal({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   const onCanvasPointerEnter = (e: ReactPointerEvent<HTMLCanvasElement>) => trackPointer(e);
@@ -279,9 +278,13 @@ export function Tile({ serial, res, className, fill = false }: Props) {
           onPointerLeave={onCanvasPointerLeave}
         />
         {!locked && pointerLocal && (
-          <TouchPointer x={pointerLocal.x} y={pointerLocal.y} size={pointerLocal.size} />
+          <TouchPointer x={pointerLocal.x} y={pointerLocal.y} />
         )}
-        <RippleLayer serial={serial} />
+        <RippleLayer
+          serial={serial}
+          videoWidth={meta?.width ?? 1080}
+          videoHeight={meta?.height ?? 1920}
+        />
         <StatusBadge kind={status} />
         {selected && <SelectedBadge sync={sync} />}
         {locked && <LockedBadge flash={lockFlash} />}
@@ -424,23 +427,27 @@ function SelectedBadge({ sync }: { sync: boolean }) {
   );
 }
 
-function TouchPointer({ x, y, size }: { x: number; y: number; size: number }) {
+// Fixed 32px diameter — matches the original SVG cursor visually so the
+// indicator looks the same as before, just positioned by DOM rather than
+// by the OS cursor layer (which had hotspot drift on HiDPI).
+const TOUCH_POINTER_SIZE = 32;
+
+function TouchPointer({ x, y }: { x: number; y: number }) {
   // Position via translate3d (compositor-promoted, no layout thrash on
-  // every pointermove). The SVG keeps its 32-unit viewBox so stroke widths
-  // visually match the original cursor regardless of the rendered size.
-  const half = size / 2;
+  // every pointermove).
+  const half = TOUCH_POINTER_SIZE / 2;
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute top-0 left-0 z-[5]"
       style={{
-        width: size,
-        height: size,
+        width: TOUCH_POINTER_SIZE,
+        height: TOUCH_POINTER_SIZE,
         transform: `translate3d(${x - half}px, ${y - half}px, 0)`,
         willChange: 'transform',
       }}
     >
-      <svg viewBox="0 0 32 32" width={size} height={size}>
+      <svg viewBox="0 0 32 32" width={TOUCH_POINTER_SIZE} height={TOUCH_POINTER_SIZE}>
         <circle cx="16" cy="16" r="10" fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="3.5" />
         <circle cx="16" cy="16" r="10" fill="none" stroke="white" strokeWidth="1.5" />
         <circle cx="16" cy="16" r="1.5" fill="white" stroke="rgba(0,0,0,0.5)" strokeWidth="0.5" />
@@ -449,9 +456,36 @@ function TouchPointer({ x, y, size }: { x: number; y: number; size: number }) {
   );
 }
 
-function RippleLayer({ serial }: { serial: string }) {
+function RippleLayer({
+  serial,
+  videoWidth,
+  videoHeight,
+}: {
+  serial: string;
+  videoWidth: number;
+  videoHeight: number;
+}) {
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   const nextIdRef = useRef(0);
+  // Ripples are positioned in the same letterbox-stripped content area that
+  // touch coordinates are normalized to (see lib/touch.ts:normalizedVideoPoint).
+  // Wrong: rendering as % of the parent's full rect — the bars on the sides
+  // get treated as part of the addressable area, so a click at the visual
+  // top of a portrait stream draws the ripple way below the click point.
+  // Right: measure the parent on layout, mimic object-contain math, position
+  // ripples in absolute pixels within the content rect.
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stage, setStage] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (r) setStage({ w: r.width, h: r.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => {
     return subscribeRipples(serial, (x, y) => {
       const id = nextIdRef.current++;
@@ -461,23 +495,46 @@ function RippleLayer({ serial }: { serial: string }) {
       }, 700);
     });
   }, [serial]);
+
+  // Letterbox math (mirror of normalizedVideoPoint, inverted).
+  const videoAspect = videoWidth / videoHeight;
+  const stageAspect = stage.w && stage.h ? stage.w / stage.h : videoAspect;
+  let contentW = stage.w;
+  let contentH = stage.h;
+  let offsetX = 0;
+  let offsetY = 0;
+  if (stage.w && stage.h) {
+    if (stageAspect > videoAspect) {
+      contentW = stage.h * videoAspect;
+      offsetX = (stage.w - contentW) / 2;
+    } else {
+      contentH = stage.w / videoAspect;
+      offsetY = (stage.h - contentH) / 2;
+    }
+  }
+  // Ripple diameter ~3% of the smaller content dimension, clamped 10-22px.
+  // Smaller than the cursor on purpose — the ripple is a brief tap-landed
+  // confirmation, not a hover indicator. Operator wants restraint here.
+  const rippleSize = Math.max(10, Math.min(22, Math.min(contentW, contentH) * 0.03));
+
   return (
-    <div className="absolute inset-0 pointer-events-none z-[5]" aria-hidden>
-      {ripples.map((r) => (
-        <span
-          key={r.id}
-          className="absolute block rounded-full border-2 border-cyan-300"
-          style={{
-            left: `${r.x * 100}%`,
-            top: `${r.y * 100}%`,
-            width: '14%',
-            paddingBottom: '14%',
-            transform: 'translate(-50%, -50%) scale(0.25)',
-            animation: 'ripple-out 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            boxShadow: '0 0 12px rgba(34, 211, 238, 0.4)',
-          }}
-        />
-      ))}
+    <div ref={stageRef} className="absolute inset-0 pointer-events-none z-[5]" aria-hidden>
+      {stage.w > 0 &&
+        ripples.map((r) => (
+          <span
+            key={r.id}
+            className="absolute block rounded-full border-2 border-cyan-300"
+            style={{
+              left: `${offsetX + r.x * contentW}px`,
+              top: `${offsetY + r.y * contentH}px`,
+              width: rippleSize,
+              height: rippleSize,
+              transform: 'translate(-50%, -50%) scale(0.25)',
+              animation: 'ripple-out 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              boxShadow: '0 0 12px rgba(34, 211, 238, 0.4)',
+            }}
+          />
+        ))}
     </div>
   );
 }
