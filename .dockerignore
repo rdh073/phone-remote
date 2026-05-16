@@ -1,0 +1,46 @@
+# VCS + editor + OS noise
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.DS_Store
+
+# Node bookkeeping (re-installed in builder)
+**/node_modules
+**/.pnpm-store
+
+# Build artifacts (re-built in builder)
+**/dist
+**/.vite
+**/.turbo
+**/coverage
+
+# Tests + scratch
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/tests
+vitest.config.ts
+
+# Secrets / operator state — provided via bind mount, not baked in
+.env
+.env.local
+.env.production
+.env.development
+
+# Lazy-downloaded scrcpy JAR — bind-mounted as a volume so it survives image rebuilds
+apps/hub/vendor
+
+# Docker bookkeeping
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Infra scripts that don't belong in the image
+infra/headscale
+infra/serve.sh
+
+# Misc
+AGENTS.md
+CLAUDE.md

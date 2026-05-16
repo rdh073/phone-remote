@@ -1,0 +1,89 @@
+# phone-remote hub — single-service compose.
+#
+# Networking: `network_mode: host` puts the container on the host network
+# namespace so it can reach phones over the host's Tailscale interface
+# (100.x.y.z) and talk to the host's adb-server at 127.0.0.1:5037 without
+# any port-mapping gymnastics. EXPOSE in the Dockerfile is informational
+# only under host networking — the hub binds whatever HOST:PORT it reads
+# from the env (defaults to 0.0.0.0:4000).
+#
+# Env precedence (matches the dev flow):
+#   1. Compose `env_file` -> baseline (read once at container start)
+#   2. .env.local bind-mount -> hot-reload writes from the Settings modal
+#      land here and the hub re-reads on every PATCH /api/settings.
+#
+# Pre-flight (one-time, run on host):
+#   cp infra/env.example .env.production && $EDITOR .env.production
+#   touch .env.local       # otherwise Docker creates this path as a directory
+#   chmod 600 .env.production .env.local
+#
+# Run:
+#   docker compose up -d --build
+#   docker compose logs -f hub
+#
+# The first WS stream lazily downloads scrcpy-server-v3.3.3 into the
+# `hub-vendor` volume (~3 MB) so the next container start skips the fetch.
+
+services:
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phone-remote-hub:latest
+    container_name: phone-remote-hub
+    restart: unless-stopped
+    # Host networking gives the hub direct access to the host's Tailscale
+    # daemon and adb-server. If you need bridge networking (e.g. for
+    # multi-host or rootless Docker), swap to `ports: ["4000:4000"]` and
+    # run a Tailscale sidecar — see docker-compose.bridge.yml in this
+    # repo's history when needed.
+    network_mode: host
+    # NOTE: we do NOT use Compose's `env_file:` for the production secrets.
+    # Compose interpolates env_file values by default and chews `$N` sequences
+    # out of bcrypt hashes / OAuth secrets ($2b$10$… → $2b$10$…truncated).
+    # The `interpolate: false` flag was added in Compose v2.30; older Compose
+    # versions reject it. Instead we bind-mount `.env.production` → `/app/.env`
+    # and let the hub's own env-loader.ts parse it (no interpolation, handles
+    # `$` correctly).
+    environment:
+      NODE_ENV: production
+      ADB_PATH: /usr/local/bin/adb
+      # Tells claude-oauth.ts where the credentials file lives inside the
+      # container. Default matches the OAuth bind-mount target below.
+      PHONE_REMOTE_CLAUDE_CREDS: ${CLAUDE_CREDS_CONTAINER_PATH:-/root/.claude/.credentials.json}
+    volumes:
+      # Production env — read by the hub's env-loader, not by Compose.
+      - ./.env.production:/app/.env:ro
+      # Settings-modal hot-reload writes live here. Must exist on the host
+      # before `up` — Docker creates missing bind sources as directories,
+      # which would break the loader.
+      - ./.env.local:/app/.env.local
+      # scrcpy-server JAR cache survives image rebuilds.
+      - hub-vendor:/app/apps/hub/vendor
+      # Claude Code OAuth credentials — read-only mount so the runtime
+      # can refresh tokens but the host file isn't accidentally rewritten
+      # from inside the container. Comment out if you don't use OAuth.
+      #
+      # Override via shell env when the host file lives under a different
+      # user (e.g. you run `docker compose` as user A but `claude` CLI as
+      # user B). Both default to the operator's own ~/.claude.
+      #
+      #   CLAUDE_CREDS_HOST_PATH=/home/<user>/.claude/.credentials.json \
+      #   CLAUDE_CREDS_CONTAINER_PATH=/home/<user>/.claude/.credentials.json \
+      #   docker compose up -d
+      - ${CLAUDE_CREDS_HOST_PATH:-${HOME}/.claude/.credentials.json}:${CLAUDE_CREDS_CONTAINER_PATH:-/root/.claude/.credentials.json}:ro
+    healthcheck:
+      # /health is auth-public; returns {"ok":true} from app.ts. Probe via
+      # Node's built-in fetch — keeps the image curl/wget-free.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  hub-vendor:

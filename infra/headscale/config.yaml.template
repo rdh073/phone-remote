@@ -1,0 +1,116 @@
+# phone-remote / Headscale config template.
+#
+# Placeholders (${...}) are substituted by infra/headscale/install.sh. Anything
+# else mirrors the production deployment on insta — change only when you know
+# what you're touching.
+
+# Public-facing URL the phone-remote hub + tagged nodes will connect to.
+server_url: ${SERVER_URL}
+
+# Headscale listens on :443 directly and terminates TLS itself (no nginx).
+# Move to :8080 behind a proxy if you prefer.
+listen_addr: 0.0.0.0:443
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+# Noise key auto-generated on first start. Don't commit this path's contents.
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+# Tailscale-native CGNAT + ULAv6 ranges. Don't change.
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+# DERP: use Tailscale's public DERP map for NAT fallback. Set
+# `derp.server.enabled: true` to run an embedded DERP server here if you want a
+# fully self-hosted relay (costs ~5MB RAM + UDP/3478 in firewall).
+derp:
+  server:
+    enabled: false
+    region_id: 999
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+    verify_clients: true
+    stun_listen_addr: "0.0.0.0:3478"
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+    ipv4: 198.51.100.1
+    ipv6: 2001:db8::1
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+
+disable_check_updates: false
+
+# Ephemeral nodes auto-cleanup after this much offline time. Affects only nodes
+# minted with `ephemeral: true` (phone-remote's hub uses non-ephemeral by
+# default; flip in apps/hub/src/provisioning.ts if you want auto-cleanup).
+ephemeral_node_inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  debug: false
+  gorm:
+    prepare_stmt: true
+    parameterized_queries: true
+    skip_err_record_not_found: true
+    slow_threshold: 1000
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+
+# Let's Encrypt — Headscale handles ACME itself on :80 (HTTP-01 challenge).
+# Required: server_url must be HTTPS, hostname must resolve to this server,
+# port 80 must be reachable from the public internet.
+acme_url: https://acme-v02.api.letsencrypt.org/directory
+acme_email: "${ACME_EMAIL}"
+tls_letsencrypt_hostname: "${TLS_HOSTNAME}"
+tls_letsencrypt_cache_dir: /var/lib/headscale/cache
+tls_letsencrypt_challenge_type: HTTP-01
+tls_letsencrypt_listen: ":http"
+# Set these instead of tls_letsencrypt_* if you prefer your own cert.
+tls_cert_path: ""
+tls_key_path: ""
+
+log:
+  level: info
+  format: text
+
+# ACL policy lives in a sibling file; reload with `systemctl reload headscale`
+# (HUP) — no restart needed.
+policy:
+  mode: file
+  path: "/etc/headscale/acl.json"
+
+# MagicDNS: nodes get <hostname>.<base_domain>. Set to a domain you control
+# (or one that won't collide with real DNS — example.com is a placeholder!).
+dns:
+  magic_dns: true
+  base_domain: ${BASE_DOMAIN}
+  override_local_dns: true
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+    split: {}
+  search_domains: []
+  extra_records: []
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+
+logtail:
+  enabled: false
+
+randomize_client_port: false
+
+taildrop:
+  enabled: true

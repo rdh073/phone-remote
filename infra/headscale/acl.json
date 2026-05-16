@@ -1,0 +1,16 @@
+{
+  "groups": {
+    "group:admins": ["operator@"]
+  },
+  "tagOwners": {
+    "tag:phone": ["group:admins"],
+    "tag:hub": ["group:admins"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:hub"],
+      "dst": ["tag:phone:5555,30000-65535"]
+    }
+  ]
+}

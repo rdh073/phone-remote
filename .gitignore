@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+*.tsbuildinfo
+
+apps/hub/vendor/
+apps/web/dist
+.vite
+
+.idea
+.vscode/*
+!.vscode/extensions.json

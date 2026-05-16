@@ -1,0 +1,22 @@
+{
+  "name": "phone-remote",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "happy-dom": "^20.9.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "packageManager": "pnpm@11.1.1",
+  "engines": {
+    "node": ">=20"
+  }
+}
