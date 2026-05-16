@@ -212,16 +212,19 @@ function TabSwitch({
         </span>
       )}
       {!hasTailscaleStep && (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'qr'}
-          onClick={() => onChange('qr')}
-          className={`${base} ${tab === 'qr' ? active : inactive}`}
-          title="Phone scans QR via Android Wireless debugging — phone must be on the same LAN as the hub"
-        >
-          <span>Wireless debug QR</span>
-        </button>
+        <>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'qr'}
+            onClick={() => onChange('qr')}
+            className={`${base} ${tab === 'qr' ? active : inactive}`}
+            title="Phone scans QR via Android Wireless debugging — phone must be on the same LAN as the hub"
+          >
+            <span>Wireless debug QR</span>
+          </button>
+          <OrSep />
+        </>
       )}
       <button
         type="button"
@@ -233,6 +236,7 @@ function TabSwitch({
       >
         <span>Pairing code</span>
       </button>
+      <OrSep />
       <button
         type="button"
         role="tab"
@@ -244,6 +248,20 @@ function TabSwitch({
         <span>ADB over USB</span>
       </button>
     </div>
+  );
+}
+
+// Subtle "OR" separator between the alternative ADB-pair method tabs. Light
+// zinc-600 keeps it readable but visually quieter than the tab labels so the
+// strip still reads as "pick one of these methods", not as part of the chrome.
+function OrSep() {
+  return (
+    <span
+      aria-hidden
+      className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600 px-0.5"
+    >
+      or
+    </span>
   );
 }
 
