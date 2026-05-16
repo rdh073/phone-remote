@@ -251,14 +251,14 @@ function TabSwitch({
   );
 }
 
-// "OR" separator between the alternative ADB-pair method tabs. Light (zinc-300)
-// so it stands out clearly on the dark surface — earlier zinc-600 attempt
-// blended too far into the chrome to read.
+// "OR" separator between the alternative ADB-pair method tabs. zinc-100
+// matches the active tab label brightness so the separator is clearly
+// readable and reads as part of the primary tab strip, not as muted chrome.
 function OrSep() {
   return (
     <span
       aria-hidden
-      className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-300 px-0.5"
+      className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-100 px-0.5"
     >
       or
     </span>
