@@ -455,9 +455,14 @@ html[data-theme='dark'] {
   box-shadow: none;
 }
 
-/* Touch-target cursor used over tile canvases — a white ring with a dark halo
-   for contrast against bright Android UIs. Hotspot is centered (16,16). The
-   trailing `crosshair` keyword is the fallback when the SVG fails to load. */
+/* OS cursor hidden over the tile canvas — Tile.tsx renders a DOM-positioned
+   <TouchPointer> overlay that tracks the real clientX/Y. SVG cursors with a
+   declared hotspot drift visually from the actual click point on HiDPI /
+   OS-cursor-scaled displays (the rasterized cursor and the hotspot can end
+   up in different coordinate systems). The DOM overlay sits in CSS pixels
+   so it always lines up with the click point exactly, and it scales with
+   the tile size so a wallboard thumbnail gets a small ring while a focused
+   tile gets a bigger one. */
 .cursor-touch {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='16' cy='16' r='10' fill='none' stroke='rgba(0,0,0,0.55)' stroke-width='3.5'/><circle cx='16' cy='16' r='10' fill='none' stroke='white' stroke-width='1.5'/><circle cx='16' cy='16' r='1.5' fill='white' stroke='rgba(0,0,0,0.5)' stroke-width='0.5'/></svg>") 16 16, crosshair;
+  cursor: none;
 }

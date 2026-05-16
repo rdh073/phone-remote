@@ -45,6 +45,13 @@ export function Tile({ serial, res, className, fill = false }: Props) {
   // tiles pause when scrolled out of view *and* the setting is enabled.
   const [offscreen, setOffscreen] = useState(false);
   const hideTimerRef = useRef<number | undefined>(undefined);
+  // DOM-rendered touch indicator (replaces OS cursor: SVG-cursor hotspot
+  // disagrees with the actual click point on HiDPI / OS-cursor-scaled
+  // displays). x/y are CSS pixels relative to the canvas top-left, so the
+  // overlay always tracks the real pointer position regardless of DPR.
+  // size scales with the tile's rendered side — a wallboard thumbnail gets
+  // a small ring, a focused/fullscreen tile gets a bigger one.
+  const [pointerLocal, setPointerLocal] = useState<{ x: number; y: number; size: number } | null>(null);
   useEffect(() => {
     if (fill || !pauseOffscreenStreams) {
       setOffscreen(false);
@@ -175,6 +182,7 @@ export function Tile({ serial, res, className, fill = false }: Props) {
   };
 
   const onCanvasPointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    trackPointer(e);
     if (locked) return;
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
     sendTouch(e, 'move');
@@ -187,6 +195,19 @@ export function Tile({ serial, res, className, fill = false }: Props) {
     }
     sendTouch(e, 'up');
   };
+
+  const trackPointer = (e: ReactPointerEvent<HTMLCanvasElement>): void => {
+    // Mouse pointers want a constant indicator follow; touch/pen only show
+    // it during contact (otherwise the indicator persists after lift on
+    // touchscreens, which looks broken).
+    if (e.pointerType !== 'mouse' && e.buttons === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const size = Math.max(12, Math.min(28, Math.min(rect.width, rect.height) * 0.05));
+    setPointerLocal({ x: e.clientX - rect.left, y: e.clientY - rect.top, size });
+  };
+
+  const onCanvasPointerEnter = (e: ReactPointerEvent<HTMLCanvasElement>) => trackPointer(e);
+  const onCanvasPointerLeave = () => setPointerLocal(null);
 
   const onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!device) return;
@@ -253,8 +274,13 @@ export function Tile({ serial, res, className, fill = false }: Props) {
           onPointerDown={onCanvasPointerDown}
           onPointerMove={onCanvasPointerMove}
           onPointerUp={onCanvasPointerUp}
-          onPointerCancel={onCanvasPointerUp}
+          onPointerCancel={(e) => { onCanvasPointerLeave(); onCanvasPointerUp(e); }}
+          onPointerEnter={onCanvasPointerEnter}
+          onPointerLeave={onCanvasPointerLeave}
         />
+        {!locked && pointerLocal && (
+          <TouchPointer x={pointerLocal.x} y={pointerLocal.y} size={pointerLocal.size} />
+        )}
         <RippleLayer serial={serial} />
         <StatusBadge kind={status} />
         {selected && <SelectedBadge sync={sync} />}
@@ -395,6 +421,31 @@ function SelectedBadge({ sync }: { sync: boolean }) {
     >
       <Check size={11} strokeWidth={3} />
     </span>
+  );
+}
+
+function TouchPointer({ x, y, size }: { x: number; y: number; size: number }) {
+  // Position via translate3d (compositor-promoted, no layout thrash on
+  // every pointermove). The SVG keeps its 32-unit viewBox so stroke widths
+  // visually match the original cursor regardless of the rendered size.
+  const half = size / 2;
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute top-0 left-0 z-[5]"
+      style={{
+        width: size,
+        height: size,
+        transform: `translate3d(${x - half}px, ${y - half}px, 0)`,
+        willChange: 'transform',
+      }}
+    >
+      <svg viewBox="0 0 32 32" width={size} height={size}>
+        <circle cx="16" cy="16" r="10" fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="3.5" />
+        <circle cx="16" cy="16" r="10" fill="none" stroke="white" strokeWidth="1.5" />
+        <circle cx="16" cy="16" r="1.5" fill="white" stroke="rgba(0,0,0,0.5)" strokeWidth="0.5" />
+      </svg>
+    </div>
   );
 }
 
