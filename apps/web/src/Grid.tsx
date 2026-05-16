@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutGrid, MonitorSmartphone, Plus, Terminal, X } from 'lucide-react';
+import { Grid2x2, LayoutGrid, MonitorSmartphone, Plus, Square, Terminal, X } from 'lucide-react';
 
 import { useDevicesStore } from './stores/devices';
 import { useLabelsStore } from './stores/labels';
@@ -38,6 +38,7 @@ export function Grid() {
         <div className="px-3 py-2 border-b border-zinc-800 flex items-center gap-2 text-xs text-zinc-400">
           <span className="text-zinc-500">{visible.length} tile{visible.length === 1 ? '' : 's'}</span>
           <span className="flex-1" />
+          <TileSizeSlider value={cols} onChange={setCols} />
           <ColsSelect value={cols} onChange={setCols} />
         </div>
       )}
@@ -236,6 +237,38 @@ function ColsSelect({ value, onChange }: { value: number; onChange: (n: number) 
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  // Slider semantics: drag LEFT  → tiles shrink → more tiles per row
+  //                   drag RIGHT → tiles grow   → fewer tiles per row
+  //
+  // The slider value represents tile size (1 = smallest, MAX = biggest), which
+  // is the inverse of the cols count. So we invert when reading from / writing
+  // back to the cols state.
+  const MIN = 1;
+  const MAX = 32;
+  const tileSize = MAX - value + MIN;
+  return (
+    <div className="inline-flex items-center gap-1.5" title="Tile size — drag left for more tiles per row, right for bigger tiles">
+      <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
+      <input
+        type="range"
+        min={MIN}
+        max={MAX}
+        step={1}
+        value={tileSize}
+        onChange={(e) => onChange(MAX - Number(e.target.value) + MIN)}
+        aria-label="Tile size"
+        aria-valuemin={MIN}
+        aria-valuemax={MAX}
+        aria-valuenow={value}
+        aria-valuetext={`${value} columns`}
+        className="h-1 w-32 accent-cyan-500 cursor-pointer"
+      />
+      <Square size={11} className="text-zinc-500" aria-hidden />
     </div>
   );
 }
