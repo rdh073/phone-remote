@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ClientMessage, Device } from '@phone-remote/protocol';
-import { Check, Lock, Smartphone } from 'lucide-react';
+import { ArrowLeft, Check, Home, Lock, Smartphone } from 'lucide-react';
 import { ExpandIcon } from './icons/Expand';
+import { sendDeviceKey } from './lib/api';
+import { KEYCODE } from './lib/keycodes';
 
 import { useScrcpyStream, type StreamHealth, type StreamRes, type StreamStats } from './hooks/useScrcpyStream';
 import type { VideoMeta } from './hooks/useScrcpyStream';
@@ -310,6 +312,7 @@ export function Tile({ serial, res, className, fill = false }: Props) {
         {(status === 'offline' || status === 'unauthorized' || status === 'unknown') && !meta && (
           <EmptyTileGlyph status={status} />
         )}
+        {status === 'online' && !locked && <TileNavBar serial={serial} />}
       </div>
       <button
         type="button"
@@ -453,6 +456,66 @@ function TouchPointer({ x, y }: { x: number; y: number }) {
         <circle cx="16" cy="16" r="1.5" fill="white" stroke="rgba(0,0,0,0.5)" strokeWidth="0.5" />
       </svg>
     </div>
+  );
+}
+
+function TileNavBar({ serial }: { serial: string }) {
+  // Android-style Back/Home/Recents strip overlaid on the canvas. Sync-aware
+  // — when sync is on, broadcasts the keypress to the focused serial AND all
+  // selected serials, matching StreamToolbar.sendKey().
+  const sync = useControlsStore((s) => s.sync);
+  const send = (keyCode: number) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const targets = sync
+      ? Array.from(new Set([serial, ...useDevicesStore.getState().selectedSerials]))
+      : [serial];
+    for (const s of targets) {
+      void sendDeviceKey(s, keyCode).catch(() => {});
+    }
+  };
+  // Stop pointer events bubbling to the canvas so a tap on the nav bar
+  // doesn't also register as a touch on the phone surface.
+  const stop = (e: ReactPointerEvent<HTMLDivElement>) => e.stopPropagation();
+  return (
+    <div
+      onPointerDown={stop}
+      onPointerUp={stop}
+      onPointerMove={stop}
+      className="absolute left-1/2 -translate-x-1/2 bottom-1.5 z-[6] flex items-center gap-0.5 rounded-full border border-zinc-700/60 bg-zinc-950/70 px-1 py-0.5 backdrop-blur-sm shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)] opacity-65 hover:opacity-100 transition-opacity duration-[140ms]"
+    >
+      <NavButton label="Back" onClick={send(KEYCODE.BACK)}>
+        <ArrowLeft size={13} strokeWidth={2} />
+      </NavButton>
+      <NavButton label="Home" onClick={send(KEYCODE.HOME)}>
+        <Home size={13} strokeWidth={2} />
+      </NavButton>
+      <NavButton label="Recents" onClick={send(KEYCODE.APP_SWITCH)}>
+        <Smartphone size={13} strokeWidth={2} />
+      </NavButton>
+    </div>
+  );
+}
+
+function NavButton({
+  children,
+  label,
+  onClick,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="h-6 w-7 inline-flex items-center justify-center rounded-full text-zinc-300 hover:text-zinc-50 hover:bg-zinc-800/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/80 transition-colors duration-[120ms]"
+    >
+      {children}
+    </button>
   );
 }
 
