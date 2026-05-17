@@ -21,14 +21,18 @@ import { AppError, errorMessage } from '../shared/errors.js';
 
 export function registerProvisionRoutes(app: FastifyInstance): void {
   app.post('/api/provision/start', async () => {
-    const s = await startSession();
-    return {
-      sessionId: s.id,
-      authKey: s.authKey,
-      loginServer: s.loginServer,
-      qrPayload: s.qrPayload,
-      expiresAt: s.expiresAt.toISOString(),
-    };
+    try {
+      const s = await startSession();
+      return {
+        sessionId: s.id,
+        authKey: s.authKey,
+        loginServer: s.loginServer,
+        qrPayload: s.qrPayload,
+        expiresAt: s.expiresAt.toISOString(),
+      };
+    } catch (err) {
+      throw mapProvisioningFailure(err);
+    }
   });
 
   app.post('/api/provision/:sessionId/pair', async (req, reply) => {
