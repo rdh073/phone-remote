@@ -5,7 +5,7 @@ import { useAuthStore } from './stores/auth';
 export function Login() {
   const login = useAuthStore((s) => s.login);
   const error = useAuthStore((s) => s.error);
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -40,6 +40,7 @@ export function Login() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            autoFocus
             autoComplete="username"
             className="ui-popover-surface border border-zinc-800 rounded px-3 py-2 focus:outline-none focus:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500"
           />
@@ -51,7 +52,6 @@ export function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            autoFocus
             autoComplete="current-password"
             className="ui-popover-surface border border-zinc-800 rounded px-3 py-2 focus:outline-none focus:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500"
           />
