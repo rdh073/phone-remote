@@ -6,7 +6,8 @@
  * Read this top-to-bottom to see what real-world subsystems the service is
  * talking to: ADB CLI, Headscale, mDNS, capability snapshot.
  */
-import { getCapabilities } from '../capabilities.js';
+import type { HubCapabilities } from '@phone-remote/protocol';
+
 import { createAuthKey, expireAuthKey, getLoginServer, isConfigured } from '../tailnet.js';
 import { CircuitBreaker } from '../shared/circuit-breaker.js';
 
@@ -20,11 +21,22 @@ import type {
 
 const ADB = process.env.ADB_PATH ?? 'adb';
 
-export function createDefaultProvisioningDependencies(): ProvisioningDependencies {
+/**
+ * Wire concrete adapters to the ProvisioningDependencies port shape.
+ * Capabilities are passed in — NOT looked up from a module-level cache —
+ * so the call graph shows exactly where the snapshot comes from.
+ */
+export function createDefaultProvisioningDependencies(
+  capabilities: HubCapabilities,
+): ProvisioningDependencies {
   const adbCircuit = new CircuitBreaker({
     failureThreshold: envPositiveInt('PROVISION_ADB_CIRCUIT_FAILURES', 5),
     cooldownMs: envPositiveInt('PROVISION_ADB_CIRCUIT_COOLDOWN_MS', 30_000),
   });
+
+  const capabilitiesPort: CapabilitiesPort = {
+    mdnsAvailable: () => capabilities.mdns,
+  };
 
   return {
     adb: new AdbCliProvisioningPort(ADB, adbCircuit),
@@ -43,10 +55,6 @@ const tailnetPort: TailnetProvisioningPort = {
   },
   expireAuthKey,
   getLoginServer,
-};
-
-const capabilitiesPort: CapabilitiesPort = {
-  mdnsAvailable: () => getCapabilities().mdns,
 };
 
 function envPositiveInt(key: string, fallback: number): number {

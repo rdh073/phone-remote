@@ -8,7 +8,8 @@ import fastifyStatic from '@fastify/static';
 import secureSession from '@fastify/secure-session';
 
 import { registerAuthGate } from './auth.js';
-import { probeCapabilities, setCapabilities } from './capabilities.js';
+import { probeCapabilities } from './capabilities.js';
+import { createDefaultProvisioningService } from './provisioning.js';
 import { registerRoutes } from './routes.js';
 import { registerErrorHandler } from './shared/http-errors.js';
 
@@ -32,10 +33,12 @@ export async function createApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' } });
   registerErrorHandler(app);
 
-  // Boot-time capability probe. Must run before routes are registered so the
-  // provisioning service sees a populated capabilities object on first call.
+  // Composition root: probe capabilities, build the provisioning service
+  // with that snapshot, decorate Fastify so route handlers read both via
+  // req.server.* (DI through the framework, not via module-level globals).
   const capabilities = await probeCapabilities();
-  setCapabilities(capabilities);
+  app.decorate('capabilities', capabilities);
+  app.decorate('provisioning', createDefaultProvisioningService(capabilities));
   app.log.info({ capabilities }, 'hub capabilities probed');
 
   await app.register(secureSession, {

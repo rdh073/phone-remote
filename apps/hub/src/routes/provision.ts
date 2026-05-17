@@ -9,18 +9,13 @@ import {
 import {
   ConnectDiscoveryNeededError,
   MdnsDiscoveryTimeoutError,
-  connectByIp,
-  deleteSession,
-  pairSession,
-  pairSessionViaQr,
-  startSession,
 } from '../provisioning.js';
 import { mapProvisioningFailure } from '../provisioning/error-map.js';
 
 export function registerProvisionRoutes(app: FastifyInstance): void {
-  app.post('/api/provision/start', async () => {
+  app.post('/api/provision/start', async (req) => {
     try {
-      const s = await startSession();
+      const s = await req.server.provisioning.startSession();
       return {
         sessionId: s.id,
         authKey: s.authKey,
@@ -38,7 +33,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
     const parsed = PairRequest.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues });
     try {
-      return await pairSession(sessionId, parsed.data);
+      return await req.server.provisioning.pairSession(sessionId, parsed.data);
     } catch (err) {
       throw mapProvisioningFailure(err);
     }
@@ -49,7 +44,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
     const parsed = QrPairBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues });
     try {
-      const result = await pairSessionViaQr(sessionId, parsed.data.connectPort);
+      const result = await req.server.provisioning.pairSessionViaQr(sessionId, parsed.data.connectPort);
       return { kind: 'done', serial: result.serial };
     } catch (err) {
       if (err instanceof ConnectDiscoveryNeededError) {
@@ -73,7 +68,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
     const parsed = ProvisionConnectBodySchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues });
     try {
-      return await connectByIp(parsed.data);
+      return await req.server.provisioning.connectByIp(parsed.data);
     } catch (err) {
       throw mapProvisioningFailure(err);
     }
@@ -81,7 +76,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
 
   app.delete('/api/provision/:sessionId', async (req) => {
     const { sessionId } = req.params as { sessionId: string };
-    await deleteSession(sessionId);
+    await req.server.provisioning.deleteSession(sessionId);
     return { ok: true };
   });
 }

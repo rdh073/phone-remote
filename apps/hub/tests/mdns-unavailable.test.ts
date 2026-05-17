@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Isolated from provisioning.test.ts so we can override the bonjour-service
 // mock to simulate a bind failure (EADDRINUSE, container-blocked multicast,
@@ -28,40 +28,36 @@ vi.mock('../src/tailnet.js', () => ({
   isConfigured: vi.fn(() => false),
 }));
 
-async function setTestCapabilities(mdns: boolean, tailnet = false): Promise<void> {
-  const { setCapabilities } = await import('../src/capabilities.js');
-  setCapabilities({ mdns, tailnet });
+async function makeService(opts: { mdns?: boolean; tailnet?: boolean } = {}) {
+  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
+  return createDefaultProvisioningService({ mdns: opts.mdns ?? true, tailnet: opts.tailnet ?? false });
 }
 
 describe('mDNS infrastructure failure → MdnsUnavailableError', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetModules();
-    // Capability is `true` here so the gate doesn't short-circuit — we want
-    // the test to exercise the RUNTIME bind-failure path, not the boot probe.
-    await setTestCapabilities(true);
   });
 
   it('Bonjour bind failure during open() rejects with typed error (not generic 500)', async () => {
-    const { startSession, pairSessionViaQr, MdnsUnavailableError } = await import(
-      '../src/provisioning.js'
-    );
-    const start = await startSession();
-    await expect(pairSessionViaQr(start.id)).rejects.toBeInstanceOf(MdnsUnavailableError);
-    const err = await pairSessionViaQr(start.id).catch((e) => e);
+    // Capability `true` so the gate doesn't short-circuit — we want
+    // the test to exercise the RUNTIME bind-failure path, not the boot probe.
+    const service = await makeService({ mdns: true });
+    const { MdnsUnavailableError } = await import('../src/provisioning.js');
+    const start = await service.startSession();
+    await expect(service.pairSessionViaQr(start.id)).rejects.toBeInstanceOf(MdnsUnavailableError);
+    const err = await service.pairSessionViaQr(start.id).catch((e) => e);
     expect(err.message).toMatch(/EADDRINUSE/);
     expect(err.message).toMatch(/failed to open mDNS socket/);
   });
 
   it('capability false short-circuits before Bonjour is touched', async () => {
-    // Flip the boot-probe result. The service must refuse without ever
-    // trying to instantiate Bonjour (so the EADDRINUSE message from the
-    // mock would NOT appear).
-    await setTestCapabilities(false);
-    const { startSession, pairSessionViaQr, MdnsUnavailableError } = await import(
-      '../src/provisioning.js'
-    );
-    const start = await startSession();
-    const err = await pairSessionViaQr(start.id).catch((e) => e);
+    // Boot-probe result false. The service must refuse without ever trying
+    // to instantiate Bonjour (so the EADDRINUSE message from the mock would
+    // NOT appear).
+    const service = await makeService({ mdns: false });
+    const { MdnsUnavailableError } = await import('../src/provisioning.js');
+    const start = await service.startSession();
+    const err = await service.pairSessionViaQr(start.id).catch((e) => e);
     expect(err).toBeInstanceOf(MdnsUnavailableError);
     expect(err.message).toMatch(/boot probe failed/);
     expect(err.message).not.toMatch(/EADDRINUSE/);

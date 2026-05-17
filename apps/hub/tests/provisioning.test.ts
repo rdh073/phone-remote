@@ -34,13 +34,13 @@ vi.mock('../src/tailnet.js', () => ({
 }));
 
 /**
- * Re-set capabilities after vi.resetModules() — the capabilities module has a
- * top-level cache that resetModules wipes, so each test that resets must
- * dynamically re-import + set before exercising the provisioning service.
+ * Per-test service factory — replaces the old module-level singleton.
+ * Each test constructs its own provisioning service with explicit
+ * capabilities, exercising the DIP path that production now uses.
  */
-async function setTestCapabilities(mdns = true, tailnet = false): Promise<void> {
-  const { setCapabilities } = await import('../src/capabilities.js');
-  setCapabilities({ mdns, tailnet });
+async function makeService(opts: { mdns?: boolean; tailnet?: boolean } = {}) {
+  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
+  return createDefaultProvisioningService({ mdns: opts.mdns ?? true, tailnet: opts.tailnet ?? false });
 }
 
 afterEach(() => {
@@ -51,14 +51,13 @@ describe('provisioning pairSession', () => {
   beforeEach(async () => {
     vi.resetModules();
     mockedExecFile.mockReset();
-    await setTestCapabilities();
   });
 
   it(
     'returns same serial when pairing same session twice',
     async () => {
-      const { startSession, pairSession } = await import('../src/provisioning.js');
-      const start = await startSession();
+      const service = await makeService();
+      const start = await service.startSession();
       const body = {
         ip: '192.168.0.10',
         pairPort: 38343,
@@ -66,8 +65,8 @@ describe('provisioning pairSession', () => {
         connectPort: 5555,
       };
 
-      const first = await pairSession(start.id, body);
-      const second = await pairSession(start.id, body);
+      const first = await service.pairSession(start.id, body);
+      const second = await service.pairSession(start.id, body);
 
       expect(first).toEqual({ serial: '192.168.0.10:5555' });
       expect(second).toEqual(first);
@@ -81,12 +80,11 @@ describe('per-session gate (race tightening)', () => {
   beforeEach(async () => {
     vi.resetModules();
     mockedExecFile.mockReset();
-    await setTestCapabilities();
   });
 
   it('two concurrent /pair calls with same body coalesce to one execution', async () => {
-    const { startSession, pairSession } = await import('../src/provisioning.js');
-    const start = await startSession();
+    const service = await makeService();
+    const start = await service.startSession();
     const body = {
       ip: '192.168.0.10',
       pairPort: 38343,
@@ -94,26 +92,26 @@ describe('per-session gate (race tightening)', () => {
       connectPort: 5555,
     };
 
-    const [a, b] = await Promise.all([pairSession(start.id, body), pairSession(start.id, body)]);
+    const [a, b] = await Promise.all([service.pairSession(start.id, body), service.pairSession(start.id, body)]);
     expect(a).toEqual(b);
     // adb pair + adb connect + adb tcpip + adb connect = 4 exec calls, NOT 8.
     expect(mockedExecFile).toHaveBeenCalledTimes(4);
   });
 
   it('concurrent /pair and /qr-pair on same session → IdempotencyConflictError', async () => {
-    const { startSession, pairSession, pairSessionViaQr } = await import('../src/provisioning.js');
+    const service = await makeService();
     const { IdempotencyConflictError } = await import('../src/shared/idempotency.js');
-    const start = await startSession();
+    const start = await service.startSession();
 
     // Kick off /pair first — registers in the session gate during this same
     // microtask. /qr-pair then hits a different fingerprint and rejects sync.
-    const inflight = pairSession(start.id, {
+    const inflight = service.pairSession(start.id, {
       ip: '192.168.0.10',
       pairPort: 38343,
       pairCode: '123456',
       connectPort: 5555,
     });
-    const conflict = pairSessionViaQr(start.id);
+    const conflict = service.pairSessionViaQr(start.id);
     await expect(conflict).rejects.toBeInstanceOf(IdempotencyConflictError);
     // The original /pair still completes — we want to verify the gate
     // protects state, not that it cancels in-flight work.
@@ -121,17 +119,17 @@ describe('per-session gate (race tightening)', () => {
   });
 
   it('two concurrent /pair calls with different bodies → second is rejected', async () => {
-    const { startSession, pairSession } = await import('../src/provisioning.js');
+    const service = await makeService();
     const { IdempotencyConflictError } = await import('../src/shared/idempotency.js');
-    const start = await startSession();
+    const start = await service.startSession();
 
-    const a = pairSession(start.id, {
+    const a = service.pairSession(start.id, {
       ip: '192.168.0.10',
       pairPort: 38343,
       pairCode: '123456',
       connectPort: 5555,
     });
-    const b = pairSession(start.id, {
+    const b = service.pairSession(start.id, {
       ip: '192.168.0.11',
       pairPort: 38343,
       pairCode: '654321',
@@ -146,7 +144,6 @@ describe('session kind discriminator', () => {
   beforeEach(async () => {
     vi.resetModules();
     mockedExecFile.mockReset();
-    await setTestCapabilities();
   });
 
   it('tailnet-mode session refuses /qr-pair with SessionKindMismatchError', async () => {
@@ -154,14 +151,13 @@ describe('session kind discriminator', () => {
     vi.mocked(tailnet.isConfigured).mockReturnValue(true);
     vi.mocked(tailnet.createAuthKey).mockResolvedValue({ id: '1', key: 'tskey-test' });
 
-    const { startSession, pairSessionViaQr, SessionKindMismatchError } = await import(
-      '../src/provisioning.js'
-    );
-    const start = await startSession();
+    const service = await makeService();
+    const { SessionKindMismatchError } = await import('../src/provisioning.js');
+    const start = await service.startSession();
     expect(start.authKey).toBe('tskey-test');
 
-    await expect(pairSessionViaQr(start.id)).rejects.toBeInstanceOf(SessionKindMismatchError);
-    const err = await pairSessionViaQr(start.id).catch((e) => e);
+    await expect(service.pairSessionViaQr(start.id)).rejects.toBeInstanceOf(SessionKindMismatchError);
+    const err = await service.pairSessionViaQr(start.id).catch((e) => e);
     expect(err.expected).toEqual(['lan']);
     expect(err.actual).toBe('tailnet');
     expect(err.message).toMatch(/mDNS multicast cannot cross/);
@@ -173,8 +169,8 @@ describe('session kind discriminator', () => {
     const tailnet = await import('../src/tailnet.js');
     vi.mocked(tailnet.isConfigured).mockReturnValue(false);
 
-    const { startSession } = await import('../src/provisioning.js');
-    const start = await startSession();
+    const service = await makeService();
+    const start = await service.startSession();
     expect(start.authKey).toBeNull();
     // No mismatch error — kind === 'lan' passes the gate. (Pairing then
     // proceeds into mDNS, which is the behaviour covered by the mdns-timeout
@@ -187,7 +183,6 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
     vi.resetModules();
     mockedExecFile.mockReset();
     vi.useFakeTimers();
-    await setTestCapabilities();
   });
 
   afterEach(() => {
@@ -195,12 +190,11 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
   });
 
   it('first attempt throws MdnsDiscoveryTimeoutError with retryAvailable=true after 25s', async () => {
-    const { startSession, pairSessionViaQr, MdnsDiscoveryTimeoutError } = await import(
-      '../src/provisioning.js'
-    );
-    const start = await startSession();
+    const service = await makeService();
+    const { MdnsDiscoveryTimeoutError } = await import('../src/provisioning.js');
+    const start = await service.startSession();
 
-    const pending = pairSessionViaQr(start.id);
+    const pending = service.pairSessionViaQr(start.id);
     pending.catch(() => {}); // pre-attach to avoid PromiseRejectionHandledWarning
 
     // Fast attempt = 25_000ms. Advance just past it.
@@ -214,20 +208,19 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
   });
 
   it('second attempt uses the slow 120s timeout and reports retryAvailable=false', async () => {
-    const { startSession, pairSessionViaQr, MdnsDiscoveryTimeoutError } = await import(
-      '../src/provisioning.js'
-    );
-    const start = await startSession();
+    const service = await makeService();
+    const { MdnsDiscoveryTimeoutError } = await import('../src/provisioning.js');
+    const start = await service.startSession();
 
     // Burn the first attempt (fast 25s).
-    const first = pairSessionViaQr(start.id);
+    const first = service.pairSessionViaQr(start.id);
     first.catch(() => {});
     await vi.advanceTimersByTimeAsync(25_001);
     await expect(first).rejects.toBeInstanceOf(MdnsDiscoveryTimeoutError);
 
     // Second attempt uses the slow path. Advance past 25s — must NOT
     // resolve yet because the slow timeout is 120_000ms.
-    const second = pairSessionViaQr(start.id);
+    const second = service.pairSessionViaQr(start.id);
     second.catch(() => {});
     await vi.advanceTimersByTimeAsync(30_000);
 

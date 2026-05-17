@@ -11,8 +11,6 @@ vi.mock('node:child_process', () => ({
   },
 }));
 
-const TARGET_NAME = 'phr-test';
-
 vi.mock('bonjour-service', () => ({
   Bonjour: class {
     find(_opts: { type: string }) {
@@ -48,21 +46,20 @@ vi.mock('../src/tailnet.js', () => ({
 // startSession has set the value).
 let preTaggedName = '';
 
-async function setTestCapabilities(mdns = true, tailnet = false): Promise<void> {
-  const { setCapabilities } = await import('../src/capabilities.js');
-  setCapabilities({ mdns, tailnet });
+async function makeService() {
+  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
+  return createDefaultProvisioningService({ mdns: true, tailnet: false });
 }
 
 describe('warm-cache fast path', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetModules();
-    await setTestCapabilities();
     preTaggedName = '';
   });
 
   it('resolves immediately when the singleton browser already has the service cached', async () => {
-    const { startSession, pairSessionViaQr } = await import('../src/provisioning.js');
-    const start = await startSession();
+    const service = await makeService();
+    const start = await service.startSession();
     // The mock reads `preTaggedName` lazily on first `find()` call, which
     // happens inside the pairing call below — so set it now.
     preTaggedName = start.qrPayload.match(/S:([^;]+);/)?.[1] ?? '';
@@ -77,7 +74,7 @@ describe('warm-cache fast path', () => {
     // path was taken.
     const sentinel = Symbol('still-pending-after-2s');
     const race = await Promise.race([
-      pairSessionViaQr(start.id).then(() => 'done').catch((e) => `rejected:${(e as Error).name}`),
+      service.pairSessionViaQr(start.id).then(() => 'done').catch((e) => `rejected:${(e as Error).name}`),
       new Promise((r) => setTimeout(() => r(sentinel), 2_000)),
     ]);
 

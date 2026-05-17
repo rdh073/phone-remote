@@ -1,10 +1,12 @@
 /**
- * Boot-time capability detection for the hub. Probed once at startup, decorated
- * onto the Fastify instance, and exposed via /health.capabilities so the frontend
- * can hide structurally-impossible paths (e.g. QR/mDNS when the multicast socket
- * can't bind on this host).
+ * Boot-time capability detection for the hub. Probed once at startup, then
+ * passed explicitly to consumers (Fastify decoration for routes, function
+ * parameter for the provisioning adapters). NO module-level state — the
+ * snapshot lives wherever its owner stores it.
  *
- * The intent is "fail visibly at boot, not opaquely at the user's first click".
+ * The intent is "fail visibly at boot, not opaquely at the user's first
+ * click" plus "every consumer of this state can be seen in the call graph,
+ * not hidden behind a service-locator lookup".
  */
 import { Bonjour } from 'bonjour-service';
 import type { HubCapabilities } from '@phone-remote/protocol';
@@ -12,32 +14,6 @@ import type { HubCapabilities } from '@phone-remote/protocol';
 import { isConfigured as isTailnetConfigured } from './tailnet.js';
 
 const DEFAULT_MDNS_PROBE_MS = 1_500;
-
-let cached: HubCapabilities | null = null;
-
-/**
- * Process-wide capability snapshot. Set once at boot by `setCapabilities`.
- * Throws if read before probe — the bug would be a route running before
- * createApp() completed, which shouldn't happen.
- */
-export function getCapabilities(): HubCapabilities {
-  if (!cached) {
-    throw new Error('capabilities accessed before probeCapabilities/setCapabilities ran');
-  }
-  return cached;
-}
-
-export function setCapabilities(value: HubCapabilities): void {
-  cached = value;
-}
-
-/**
- * Test-only. Drop the cached capabilities so a subsequent set/probe
- * starts fresh. Production code never needs this.
- */
-export function resetCapabilities(): void {
-  cached = null;
-}
 
 export async function probeCapabilities(opts: { mdnsProbeMs?: number } = {}): Promise<HubCapabilities> {
   const mdnsProbeMs = opts.mdnsProbeMs ?? DEFAULT_MDNS_PROBE_MS;
