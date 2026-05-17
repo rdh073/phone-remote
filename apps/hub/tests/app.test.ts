@@ -12,10 +12,17 @@ vi.mock('../src/tailnet.js', () => ({
   expireAuthKey: vi.fn(),
   getLoginServer: () => '',
 }));
+vi.mock('../src/capabilities.js', () => ({
+  probeCapabilities: vi.fn().mockResolvedValue({ mdns: false, tailnet: false }),
+}));
 vi.mock('../src/provisioning.js', () => ({
-  startSession: vi.fn(),
-  pairSession: vi.fn(),
-  deleteSession: vi.fn(),
+  createDefaultProvisioningService: vi.fn(() => ({
+    startSession: vi.fn(),
+    pairSession: vi.fn(),
+    pairSessionViaQr: vi.fn(),
+    connectByIp: vi.fn(),
+    deleteSession: vi.fn(),
+  })),
 }));
 vi.mock('../src/device-actions.js', () => ({
   sendKeyEvent: vi.fn(),
