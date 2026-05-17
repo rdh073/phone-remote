@@ -19,9 +19,10 @@ describe('readPreset', () => {
     for (const k of KEYS) delete process.env[k];
   });
 
-  it('returns the hardcoded defaults when no env is set', () => {
+  it('returns the dual-stream defaults when no env is set', () => {
+    // main = focused tile (high quality), thumb = grid thumbnail (cheap).
     expect(readPreset('main')).toEqual({ maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 });
-    expect(readPreset('thumb')).toEqual({ maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 });
+    expect(readPreset('thumb')).toEqual({ maxSize: 480, videoBitRate: 1_000_000, maxFps: 15 });
   });
 
   it('honors per-preset env overrides', () => {
@@ -45,8 +46,8 @@ describe('readPreset', () => {
 
   it('treats main and thumb env vars independently', () => {
     process.env.SCRCPY_MAIN_MAX_SIZE = '1920';
-    // thumb left unset
+    // thumb left unset → falls back to its own (different) default, not main's.
     expect(readPreset('main').maxSize).toBe(1920);
-    expect(readPreset('thumb').maxSize).toBe(1280);
+    expect(readPreset('thumb').maxSize).toBe(480);
   });
 });

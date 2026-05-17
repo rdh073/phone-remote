@@ -14,9 +14,13 @@ const DOWNLOAD_URL = `https://github.com/Genymobile/scrcpy/releases/download/v${
 const VENDOR_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../vendor');
 const JAR_PATH = resolve(VENDOR_DIR, `scrcpy-server-v${SCRCPY_VERSION}`);
 
+// Dual-stream defaults: the focused tile (`main`) gets high quality so input
+// + detail are readable; grid thumbnails (`thumb`) get a fraction of the
+// bandwidth so N tiles in a wallboard stay cheap. Operators can override per-
+// preset via the SCRCPY_(MAIN|THUMB)_* env vars; see infra/env.example.
 const DEFAULT_PRESETS = {
-  main: { maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 },
-  thumb: { maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 },
+  main:  { maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 },
+  thumb: { maxSize:  480, videoBitRate: 1_000_000, maxFps: 15 },
 } as const;
 
 export type ScrcpyRes = keyof typeof DEFAULT_PRESETS;
