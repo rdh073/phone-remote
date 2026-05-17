@@ -7,7 +7,9 @@ import { IdempotencyGate, stableFingerprint } from '../shared/idempotency.js';
 import { invariant } from '../shared/invariant.js';
 import {
   AdbConnectFailedError,
+  AdbPairFailedError,
   ConnectDiscoveryNeededError,
+  MdnsUnavailableError,
   ProvisioningSessionError,
   SessionKindMismatchError,
 } from './errors.js';
@@ -117,7 +119,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
     const pairEndpoint = { ip: body.ip, port: body.pairPort };
     const connectEndpoint = { ip: body.ip, port: body.connectPort };
     try {
-      await deps.adb.pair(pairEndpoint, body.pairCode);
+      await pairOrThrow(pairEndpoint, body.pairCode);
       await deps.adb.connect(connectEndpoint);
       const serial = (await tryUpgradeToTcpip(`${body.ip}:${body.connectPort}`, body.ip)) ?? `${body.ip}:${body.connectPort}`;
       markPaired(session, serial);
@@ -125,6 +127,20 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
     } catch (err) {
       markFailed(session, err);
       throw err;
+    }
+  }
+
+  async function pairOrThrow(endpoint: Endpoint, code: string): Promise<void> {
+    try {
+      await deps.adb.pair(endpoint, code);
+    } catch (err) {
+      // adb-CLI failures here are usually wrong code, no route, or socket
+      // timeout. Wrap so the route layer can distinguish from a connect-time
+      // failure (which already has its own typed error).
+      throw new AdbPairFailedError(
+        `adb pair ${endpoint.ip}:${endpoint.port} failed: ${errorMessage(err)}`,
+        { cause: err },
+      );
     }
   }
 
@@ -156,7 +172,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
         session.qrAttempts += 1;
         const discoveryTimeout = attempt === 0 ? QR_DISCOVERY_TIMEOUT_FAST_MS : QR_DISCOVERY_TIMEOUT_SLOW_MS;
         const pairing = await discovery.findPairing(session.qrServiceName, discoveryTimeout, attempt === 0);
-        await deps.adb.pair(pairing, session.qrPassword);
+        await pairOrThrow(pairing, session.qrPassword);
         pairIp = pairing.ip;
         session.pairIp = pairIp;
         session.status = 'pair-complete';
@@ -169,7 +185,10 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
         try {
           const connect = await discovery.waitForConnect(CONNECT_DISCOVERY_TIMEOUT_MS);
           return finishConnect(session, connect.ip, connect.port);
-        } catch {
+        } catch (err) {
+          // Surface infra failures up; only treat timeouts as "ask the
+          // operator for a port".
+          if (err instanceof MdnsUnavailableError) throw err;
           throw new ConnectDiscoveryNeededError(pairIp);
         }
       }

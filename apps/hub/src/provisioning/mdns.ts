@@ -1,6 +1,6 @@
 import { Bonjour, type Service } from 'bonjour-service';
 
-import { MdnsDiscoveryTimeoutError } from './errors.js';
+import { MdnsDiscoveryTimeoutError, MdnsUnavailableError } from './errors.js';
 import type { Endpoint, MdnsProvisioningPort, MdnsProvisioningSession } from './types.js';
 
 type Browser = ReturnType<Bonjour['find']>;
@@ -12,18 +12,50 @@ export class BonjourMdnsProvisioningPort implements MdnsProvisioningPort {
 }
 
 class BonjourMdnsProvisioningSession implements MdnsProvisioningSession {
-  private readonly bonjour = new Bonjour();
-  private readonly connectBrowser = this.bonjour.find({ type: 'adb-tls-connect', protocol: 'tcp' });
+  private readonly bonjour: Bonjour;
+  private readonly connectBrowser: Browser;
+  private connectBrowserError: Error | null = null;
+
+  constructor() {
+    try {
+      this.bonjour = new Bonjour();
+      this.connectBrowser = this.bonjour.find({ type: 'adb-tls-connect', protocol: 'tcp' });
+    } catch (err) {
+      throw new MdnsUnavailableError(
+        `failed to open mDNS socket: ${(err as Error).message ?? String(err)}`,
+        { cause: err },
+      );
+    }
+    // Capture async socket errors that would otherwise surface as
+    // uncaughtException (and via Fastify default handler as opaque 500s).
+    this.connectBrowser.on('error', (err: Error) => {
+      this.connectBrowserError = err;
+    });
+  }
 
   findPairing(serviceName: string, timeoutMs: number, retryAvailable: boolean): Promise<Endpoint> {
     return waitForService(this.bonjour, 'adb-tls-pairing', serviceName, timeoutMs, retryAvailable);
   }
 
   cachedConnect(): Endpoint | null {
+    if (this.connectBrowserError) {
+      throw new MdnsUnavailableError(
+        `mDNS connect-browser failed: ${this.connectBrowserError.message}`,
+        { cause: this.connectBrowserError },
+      );
+    }
     return pickAddress(this.connectBrowser.services);
   }
 
   waitForConnect(timeoutMs: number): Promise<Endpoint> {
+    if (this.connectBrowserError) {
+      return Promise.reject(
+        new MdnsUnavailableError(
+          `mDNS connect-browser failed: ${this.connectBrowserError.message}`,
+          { cause: this.connectBrowserError },
+        ),
+      );
+    }
     return waitForServiceOn(this.connectBrowser, timeoutMs);
   }
 
@@ -49,12 +81,24 @@ async function waitForService(
   retryAvailable: boolean,
 ): Promise<Endpoint> {
   return new Promise((resolve, reject) => {
-    const browser = bonjour.find({ type, protocol: 'tcp' });
+    let browser: Browser;
+    try {
+      browser = bonjour.find({ type, protocol: 'tcp' });
+    } catch (err) {
+      reject(
+        new MdnsUnavailableError(
+          `failed to start _${type}._tcp browser: ${(err as Error).message ?? String(err)}`,
+          { cause: err },
+        ),
+      );
+      return;
+    }
     const seen: { name: string; addresses?: string[]; port: number }[] = [];
 
     const cleanup = (): void => {
       clearTimeout(timer);
       browser.removeListener('up', onUp);
+      browser.removeListener('error', onError);
       browser.stop();
     };
 
@@ -71,6 +115,16 @@ async function waitForService(
       );
     }, timeoutMs);
 
+    const onError = (err: Error): void => {
+      cleanup();
+      reject(
+        new MdnsUnavailableError(
+          `_${type}._tcp browser error: ${err.message}`,
+          { cause: err },
+        ),
+      );
+    };
+
     const onUp = (service: Service): void => {
       seen.push({ name: service.name, addresses: service.addresses, port: service.port });
       const exactNameMatch = serviceName && service.name === serviceName;
@@ -84,6 +138,7 @@ async function waitForService(
       resolve({ ip, port: service.port });
     };
 
+    browser.on('error', onError);
     browser.on('up', onUp);
     for (const existing of browser.services) onUp(existing);
   });
@@ -94,12 +149,20 @@ function waitForServiceOn(browser: Browser, timeoutMs: number): Promise<Endpoint
     const cleanup = (): void => {
       clearTimeout(timer);
       browser.removeListener('up', onUp);
+      browser.removeListener('error', onError);
     };
 
     const timer = setTimeout(() => {
       cleanup();
-      reject(new Error(`mDNS discovery timed out after ${timeoutMs}ms`));
+      reject(new MdnsDiscoveryTimeoutError(`mDNS discovery timed out after ${timeoutMs}ms`, false));
     }, timeoutMs);
+
+    const onError = (err: Error): void => {
+      cleanup();
+      reject(
+        new MdnsUnavailableError(`mDNS browser error: ${err.message}`, { cause: err }),
+      );
+    };
 
     const onUp = (service: Service): void => {
       const ip = (service.addresses ?? []).find(isIpv4);
@@ -108,6 +171,7 @@ function waitForServiceOn(browser: Browser, timeoutMs: number): Promise<Endpoint
       resolve({ ip, port: service.port });
     };
 
+    browser.on('error', onError);
     browser.on('up', onUp);
     const existing = pickAddress(browser.services);
     if (existing) {

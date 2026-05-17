@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+/**
+ * Upstream failure when talking to Headscale (or any future tailnet provider).
+ * Carries the upstream HTTP status when known so the route layer can decide
+ * whether to surface it as 502 (bad gateway) or 503 (gateway unavailable).
+ */
+export class TailnetError extends Error {
+  readonly upstreamStatus?: number;
+  constructor(message: string, options?: { upstreamStatus?: number; cause?: unknown }) {
+    super(message, { cause: options?.cause });
+    this.name = 'TailnetError';
+    this.upstreamStatus = options?.upstreamStatus;
+  }
+}
+
 const url = (): string => process.env.HEADSCALE_URL ?? '';
 const apiKey = (): string | undefined => process.env.HEADSCALE_API_KEY;
 const userId = (): number | undefined => {
@@ -61,7 +75,11 @@ export async function createAuthKey(opts: {
     headers: headers(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Headscale POST preauthkey ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    throw new TailnetError(`Headscale POST preauthkey ${res.status}: ${await res.text()}`, {
+      upstreamStatus: res.status,
+    });
+  }
   return CreateResponse.parse(await res.json()).preAuthKey;
 }
 
@@ -72,7 +90,11 @@ export async function expireAuthKey(id: string): Promise<void> {
     headers: headers(),
     body: JSON.stringify({ id: Number(id) }),
   });
-  if (!res.ok) throw new Error(`Headscale expire ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    throw new TailnetError(`Headscale expire ${res.status}: ${await res.text()}`, {
+      upstreamStatus: res.status,
+    });
+  }
 }
 
 export async function deleteNode(id: string): Promise<void> {
@@ -82,7 +104,9 @@ export async function deleteNode(id: string): Promise<void> {
     headers: headers(),
   });
   if (!res.ok && res.status !== 404) {
-    throw new Error(`Headscale delete node ${res.status}: ${await res.text()}`);
+    throw new TailnetError(`Headscale delete node ${res.status}: ${await res.text()}`, {
+      upstreamStatus: res.status,
+    });
   }
 }
 
@@ -93,11 +117,13 @@ export async function listNodes(): Promise<TailnetNode[]> {
     headers: headers(),
   });
   if (!res.ok) {
-    throw new Error(`Headscale list nodes ${res.status}: ${await res.text()}`);
+    throw new TailnetError(`Headscale list nodes ${res.status}: ${await res.text()}`, {
+      upstreamStatus: res.status,
+    });
   }
   const parsed = NodeListResponse.safeParse(await res.json());
   if (!parsed.success) {
-    throw new Error('Headscale list nodes returned an unexpected response shape');
+    throw new TailnetError('Headscale list nodes returned an unexpected response shape');
   }
   return parsed.data.nodes;
 }
@@ -111,6 +137,6 @@ function headers(): Record<string, string> {
 
 function ensureConfigured(): void {
   if (!isConfigured()) {
-    throw new Error('Headscale not configured: set HEADSCALE_URL and HEADSCALE_API_KEY');
+    throw new TailnetError('Headscale not configured: set HEADSCALE_URL and HEADSCALE_API_KEY');
   }
 }

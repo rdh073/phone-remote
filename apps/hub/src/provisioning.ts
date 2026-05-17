@@ -13,8 +13,10 @@ export { createProvisioningService } from './provisioning/service.js';
 export { createDefaultProvisioningDependencies } from './provisioning/adapters.js';
 export {
   AdbConnectFailedError,
+  AdbPairFailedError,
   ConnectDiscoveryNeededError,
   MdnsDiscoveryTimeoutError,
+  MdnsUnavailableError,
   ProvisioningSessionError,
   SessionKindMismatchError,
 } from './provisioning/errors.js';

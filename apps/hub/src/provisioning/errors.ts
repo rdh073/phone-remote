@@ -19,6 +19,29 @@ export class AdbConnectFailedError extends Error {
   }
 }
 
+export class AdbPairFailedError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'AdbPairFailedError';
+  }
+}
+
+/**
+ * Raised when the Bonjour multicast socket cannot be brought up, or when a
+ * running browser emits a socket-level error. Distinct from
+ * `MdnsDiscoveryTimeoutError` (which means the infrastructure works, the
+ * announcement just never came) — this one means mDNS is structurally
+ * unavailable on this host (avahi-daemon owns 5353, container netns blocks
+ * multicast, etc.). Maps to 503, not 502: the operator can't fix this by
+ * retrying.
+ */
+export class MdnsUnavailableError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'MdnsUnavailableError';
+  }
+}
+
 export class ProvisioningSessionError extends Error {
   constructor(message: string) {
     super(message);
