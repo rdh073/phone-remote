@@ -47,6 +47,10 @@ type State = {
   // after the second QR attempt times out — at that point only Pairing-code
   // is a reasonable next step.
   qrRetryAvailable: boolean;
+  /** Window (ms) the next retry would use, surfaced by the backend's 422
+   *  mdns-timeout response. Used to render the retry-button tooltip without
+   *  hardcoding the backend's constant. null when no retry is offered. */
+  qrNextRetryTimeoutMs: number | null;
   serial: string | null;
   pairIp: string | null;
   pairDraft: PairDraft;
@@ -72,6 +76,7 @@ export const useProvisioningStore = create<State>()((set, get) => ({
   tab: 'qr',
   qrAutoStarted: false,
   qrRetryAvailable: true,
+  qrNextRetryTimeoutMs: null,
   serial: null,
   pairIp: null,
   pairDraft: EMPTY_PAIR_DRAFT,
@@ -106,6 +111,7 @@ export const useProvisioningStore = create<State>()((set, get) => ({
       tab: 'qr',
       qrAutoStarted: false,
       qrRetryAvailable: true,
+      qrNextRetryTimeoutMs: null,
       pairDraft: EMPTY_PAIR_DRAFT,
       usbDraft: EMPTY_USB_DRAFT,
     });
@@ -140,7 +146,12 @@ export const useProvisioningStore = create<State>()((set, get) => ({
         return;
       }
       if (result.kind === 'mdns-timeout') {
-        set({ status: 'mdns-timeout', error: result.message, qrRetryAvailable: result.retryAvailable });
+        set({
+          status: 'mdns-timeout',
+          error: result.message,
+          qrRetryAvailable: result.retryAvailable,
+          qrNextRetryTimeoutMs: result.nextRetryTimeoutMs ?? null,
+        });
         return;
       }
       set({ status: 'done', serial: result.serial });
@@ -192,6 +203,7 @@ function resetState(): Partial<State> {
     tab: 'qr',
     qrAutoStarted: false,
     qrRetryAvailable: true,
+    qrNextRetryTimeoutMs: null,
     pairDraft: EMPTY_PAIR_DRAFT,
     usbDraft: EMPTY_USB_DRAFT,
   };

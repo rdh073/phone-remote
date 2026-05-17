@@ -197,6 +197,9 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
     expect(err).toBeInstanceOf(MdnsDiscoveryTimeoutError);
     expect(err.retryAvailable).toBe(true);
     expect(err.message).toMatch(/timed out after 25000ms/);
+    // Service layer annotates the error with the NEXT attempt's window so the
+    // route layer can surface it to the UI without hardcoding the constant.
+    expect(err.nextRetryTimeoutMs).toBe(120_000);
   });
 
   it('second attempt uses the slow 120s timeout and reports retryAvailable=false', async () => {
@@ -229,5 +232,8 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
     const err = await second.catch((e) => e);
     expect(err.retryAvailable).toBe(false);
     expect(err.message).toMatch(/timed out after 120000ms/);
+    // No retry available → annotation stays undefined; the UI hides the
+    // retry button entirely on this branch.
+    expect(err.nextRetryTimeoutMs).toBeUndefined();
   });
 });

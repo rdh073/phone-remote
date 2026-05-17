@@ -294,6 +294,7 @@ function QrPair({
   const qrAutoStarted = useProvisioningStore((s) => s.qrAutoStarted);
   const markQrAutoStarted = useProvisioningStore((s) => s.markQrAutoStarted);
   const qrRetryAvailable = useProvisioningStore((s) => s.qrRetryAvailable);
+  const qrNextRetryTimeoutMs = useProvisioningStore((s) => s.qrNextRetryTimeoutMs);
 
   useEffect(() => {
     if (status === 'awaiting-pair' && !qrAutoStarted) {
@@ -336,7 +337,7 @@ function QrPair({
                 void pairQr();
               }}
               className="inline-flex items-center justify-center gap-1.5 rounded border border-zinc-700 bg-zinc-900 ui-chip-surface px-3 py-1.5 text-xs text-zinc-300 hover:text-zinc-100 hover:border-zinc-600"
-              title="Retry with a longer (120s) discovery window — useful only if QR was working before and the LAN is just slow"
+              title={`Retry with a longer${qrNextRetryTimeoutMs ? ` (${Math.round(qrNextRetryTimeoutMs / 1000)}s)` : ''} discovery window — useful only if QR was working before and the LAN is just slow`}
             >
               Retry QR (longer wait)
             </button>

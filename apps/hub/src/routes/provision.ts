@@ -75,6 +75,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
           kind: 'mdns-timeout',
           message: err.message,
           retryAvailable: err.retryAvailable,
+          nextRetryTimeoutMs: err.nextRetryTimeoutMs,
         });
       }
       throw mapProvisioningFailure(err);

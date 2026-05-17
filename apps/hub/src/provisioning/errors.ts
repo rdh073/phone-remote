@@ -6,6 +6,13 @@ export class ConnectDiscoveryNeededError extends Error {
 }
 
 export class MdnsDiscoveryTimeoutError extends Error {
+  /**
+   * Window (ms) the NEXT retry attempt would use, if `retryAvailable` is true.
+   * Set by the service layer after the error is caught, so the route layer
+   * (and ultimately the frontend) can render an accurate "retry with a longer
+   * Xs discovery window" hint without hardcoding the value.
+   */
+  public nextRetryTimeoutMs?: number;
   constructor(message: string, public retryAvailable: boolean) {
     super(message);
     this.name = 'MdnsDiscoveryTimeoutError';

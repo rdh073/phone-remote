@@ -184,6 +184,8 @@ export const QrProvisionMdnsTimeoutSchema = z.object({
   kind: z.literal('mdns-timeout'),
   message: z.string(),
   retryAvailable: z.boolean(),
+  /** Window (ms) the next retry will use. Populated only when retryAvailable. */
+  nextRetryTimeoutMs: z.number().int().positive().optional(),
 });
 export type QrProvisionMdnsTimeout = z.infer<typeof QrProvisionMdnsTimeoutSchema>;
 

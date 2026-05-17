@@ -9,6 +9,7 @@ import {
   AdbConnectFailedError,
   AdbPairFailedError,
   ConnectDiscoveryNeededError,
+  MdnsDiscoveryTimeoutError,
   MdnsUnavailableError,
   ProvisioningSessionError,
 } from './errors.js';
@@ -200,6 +201,11 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
 
       throw new ConnectDiscoveryNeededError(pairIp);
     } catch (err) {
+      // Annotate timeouts with the next-attempt's window so the route layer
+      // can surface it to the UI without hardcoding the constant.
+      if (err instanceof MdnsDiscoveryTimeoutError && err.retryAvailable) {
+        err.nextRetryTimeoutMs = QR_DISCOVERY_TIMEOUT_SLOW_MS;
+      }
       if (!(err instanceof ConnectDiscoveryNeededError)) {
         markFailed(session, err);
       }
