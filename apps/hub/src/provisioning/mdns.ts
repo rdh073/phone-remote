@@ -11,66 +11,42 @@ export class BonjourMdnsProvisioningPort implements MdnsProvisioningPort {
   }
 }
 
+/**
+ * Thin owner of one Bonjour instance per provisioning attempt. Each `findX`
+ * call spins its own short-lived browser via the helper below; this class
+ * holds nothing across calls beyond the multicast socket itself, which keeps
+ * the error surface tiny — exceptions during browse are caught by the
+ * helper and translated to `MdnsUnavailableError`.
+ */
 class BonjourMdnsProvisioningSession implements MdnsProvisioningSession {
   private readonly bonjour: Bonjour;
-  private readonly connectBrowser: Browser;
-  private connectBrowserError: Error | null = null;
 
   constructor() {
     try {
       this.bonjour = new Bonjour();
-      this.connectBrowser = this.bonjour.find({ type: 'adb-tls-connect', protocol: 'tcp' });
     } catch (err) {
       throw new MdnsUnavailableError(
         `failed to open mDNS socket: ${(err as Error).message ?? String(err)}`,
         { cause: err },
       );
     }
-    // Capture async socket errors that would otherwise surface as
-    // uncaughtException (and via Fastify default handler as opaque 500s).
-    this.connectBrowser.on('error', (err: Error) => {
-      this.connectBrowserError = err;
-    });
   }
 
   findPairing(serviceName: string, timeoutMs: number, retryAvailable: boolean): Promise<Endpoint> {
     return waitForService(this.bonjour, 'adb-tls-pairing', serviceName, timeoutMs, retryAvailable);
   }
 
-  cachedConnect(): Endpoint | null {
-    if (this.connectBrowserError) {
-      throw new MdnsUnavailableError(
-        `mDNS connect-browser failed: ${this.connectBrowserError.message}`,
-        { cause: this.connectBrowserError },
-      );
-    }
-    return pickAddress(this.connectBrowser.services);
-  }
-
   waitForConnect(timeoutMs: number): Promise<Endpoint> {
-    if (this.connectBrowserError) {
-      return Promise.reject(
-        new MdnsUnavailableError(
-          `mDNS connect-browser failed: ${this.connectBrowserError.message}`,
-          { cause: this.connectBrowserError },
-        ),
-      );
-    }
-    return waitForServiceOn(this.connectBrowser, timeoutMs);
+    return waitForService(this.bonjour, 'adb-tls-connect', null, timeoutMs, false);
   }
 
   close(): void {
-    this.connectBrowser.stop();
-    this.bonjour.destroy();
+    try {
+      this.bonjour.destroy();
+    } catch {
+      // ignore — close is best-effort cleanup, called from `finally`
+    }
   }
-}
-
-function pickAddress(services: readonly Service[]): Endpoint | null {
-  for (const service of services) {
-    const ip = (service.addresses ?? []).find(isIpv4);
-    if (ip) return { ip, port: service.port };
-  }
-  return null;
 }
 
 async function waitForService(
@@ -140,44 +116,10 @@ async function waitForService(
 
     browser.on('error', onError);
     browser.on('up', onUp);
+    // Replay anything already cached on the underlying mDNS daemon (rare,
+    // but covers the case where a previous browse left services in the
+    // multicast-dns cache).
     for (const existing of browser.services) onUp(existing);
-  });
-}
-
-function waitForServiceOn(browser: Browser, timeoutMs: number): Promise<Endpoint> {
-  return new Promise((resolve, reject) => {
-    const cleanup = (): void => {
-      clearTimeout(timer);
-      browser.removeListener('up', onUp);
-      browser.removeListener('error', onError);
-    };
-
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new MdnsDiscoveryTimeoutError(`mDNS discovery timed out after ${timeoutMs}ms`, false));
-    }, timeoutMs);
-
-    const onError = (err: Error): void => {
-      cleanup();
-      reject(
-        new MdnsUnavailableError(`mDNS browser error: ${err.message}`, { cause: err }),
-      );
-    };
-
-    const onUp = (service: Service): void => {
-      const ip = (service.addresses ?? []).find(isIpv4);
-      if (!ip) return;
-      cleanup();
-      resolve({ ip, port: service.port });
-    };
-
-    browser.on('error', onError);
-    browser.on('up', onUp);
-    const existing = pickAddress(browser.services);
-    if (existing) {
-      cleanup();
-      resolve(existing);
-    }
   });
 }
 

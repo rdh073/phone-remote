@@ -62,7 +62,6 @@ export interface TailnetProvisioningPort {
 
 export interface MdnsProvisioningSession {
   findPairing(serviceName: string, timeoutMs: number, retryAvailable: boolean): Promise<Endpoint>;
-  cachedConnect(): Endpoint | null;
   waitForConnect(timeoutMs: number): Promise<Endpoint>;
   close(): void;
 }

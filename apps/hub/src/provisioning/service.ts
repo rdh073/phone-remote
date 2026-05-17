@@ -179,17 +179,14 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
         session.pairIp = pairIp;
         session.status = 'pair-complete';
 
-        const cached = discovery.cachedConnect();
-        if (cached) {
-          return finishConnect(session, cached.ip, cached.port);
-        }
-
         try {
           const connect = await discovery.waitForConnect(CONNECT_DISCOVERY_TIMEOUT_MS);
           return finishConnect(session, connect.ip, connect.port);
         } catch (err) {
           // Surface infra failures up; only treat timeouts as "ask the
-          // operator for a port".
+          // operator for a port". waitForConnect's own replay of already-
+          // cached services covers the rare case where the phone announced
+          // _adb-tls-connect before the browser came up.
           if (err instanceof MdnsUnavailableError) throw err;
           throw new ConnectDiscoveryNeededError(pairIp);
         }
