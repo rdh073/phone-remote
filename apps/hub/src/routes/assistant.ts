@@ -12,7 +12,7 @@ export function registerAssistantRoutes(app: FastifyInstance): void {
       return reply.code(503).send({
         error: 'assistant disabled',
         detail:
-          'No provider is configured. Enable one of: Claude OAuth (run `claude` once), ' +
+          'No provider is configured. Enable one of: Claude OAuth (set CLAUDE_OAUTH_TOKEN or run `claude` once), ' +
           'ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, DEEPSEEK_API_KEY, ' +
           'a running Ollama daemon, or OPENAI_COMPATIBLE_BASE_URL.',
       });

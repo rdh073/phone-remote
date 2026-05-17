@@ -80,8 +80,20 @@ export function credentialsPath(): string {
   return join(homedir(), '.claude', '.credentials.json');
 }
 
+/**
+ * Operator-supplied access token. When set, wins over credentials.json:
+ * the hub treats it as a long-lived token and skips both the file read and
+ * the OAuth refresh cycle. Intended for environments where the credentials
+ * file can't be mounted (sandboxed container, ephemeral runner) or where
+ * the operator wants to inject a fresh token at deploy time.
+ */
+function envOauthToken(): string | undefined {
+  const v = process.env.CLAUDE_OAUTH_TOKEN;
+  return v && v.length > 0 ? v : undefined;
+}
+
 export function isClaudeCodeAvailable(): boolean {
-  return existsSync(credentialsPath());
+  return Boolean(envOauthToken()) || existsSync(credentialsPath());
 }
 
 async function loadCredentials(): Promise<CredentialsFile> {
@@ -154,6 +166,11 @@ async function refreshTokens(refreshToken: string, scopes: string[]): Promise<{
 }
 
 export async function getValidAccessToken(): Promise<string> {
+  // CLAUDE_OAUTH_TOKEN wins: treated as a long-lived token, no file I/O,
+  // no refresh attempted. Operators using this env var own token rotation.
+  const env = envOauthToken();
+  if (env) return env;
+
   const data = await loadCredentials();
   const block = data.claudeAiOauth;
   if (!block) throw new Error("credentials file missing 'claudeAiOauth' block");

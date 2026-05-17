@@ -312,7 +312,7 @@ const PROVIDER_SPECS: ProviderSpec[] = [
     },
     models: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'],
     available: isClaudeCodeAvailable,
-    configHint: 'run `claude` once to log in, or set PHONE_REMOTE_CLAUDE_CREDS',
+    configHint: 'set CLAUDE_OAUTH_TOKEN, or run `claude` once to log in (auto-reads ~/.claude/.credentials.json), or set PHONE_REMOTE_CLAUDE_CREDS',
   },
   {
     id: 'anthropic-api',
