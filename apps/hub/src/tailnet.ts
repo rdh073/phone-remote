@@ -75,11 +75,7 @@ export async function createAuthKey(opts: {
     headers: headers(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    throw new TailnetError(`Headscale POST preauthkey ${res.status}: ${await res.text()}`, {
-      upstreamStatus: res.status,
-    });
-  }
+  await assertOk(res, 'POST preauthkey');
   return CreateResponse.parse(await res.json()).preAuthKey;
 }
 
@@ -90,11 +86,7 @@ export async function expireAuthKey(id: string): Promise<void> {
     headers: headers(),
     body: JSON.stringify({ id: Number(id) }),
   });
-  if (!res.ok) {
-    throw new TailnetError(`Headscale expire ${res.status}: ${await res.text()}`, {
-      upstreamStatus: res.status,
-    });
-  }
+  await assertOk(res, 'expire');
 }
 
 export async function deleteNode(id: string): Promise<void> {
@@ -103,11 +95,9 @@ export async function deleteNode(id: string): Promise<void> {
     method: 'DELETE',
     headers: headers(),
   });
-  if (!res.ok && res.status !== 404) {
-    throw new TailnetError(`Headscale delete node ${res.status}: ${await res.text()}`, {
-      upstreamStatus: res.status,
-    });
-  }
+  // 404 means "already gone" — treat as success, matches the disconnect path.
+  if (res.status === 404) return;
+  await assertOk(res, 'delete node');
 }
 
 export async function listNodes(): Promise<TailnetNode[]> {
@@ -116,16 +106,24 @@ export async function listNodes(): Promise<TailnetNode[]> {
     method: 'GET',
     headers: headers(),
   });
-  if (!res.ok) {
-    throw new TailnetError(`Headscale list nodes ${res.status}: ${await res.text()}`, {
-      upstreamStatus: res.status,
-    });
-  }
+  await assertOk(res, 'list nodes');
   const parsed = NodeListResponse.safeParse(await res.json());
   if (!parsed.success) {
     throw new TailnetError('Headscale list nodes returned an unexpected response shape');
   }
   return parsed.data.nodes;
+}
+
+/**
+ * Single throw site for Headscale-call failures. Centralises the
+ * "Headscale {op} {status}: {body}" message format and the upstream-status
+ * propagation that the route-layer mapper uses to discriminate 401/403/5xx.
+ */
+async function assertOk(res: Response, op: string): Promise<void> {
+  if (res.ok) return;
+  throw new TailnetError(`Headscale ${op} ${res.status}: ${await res.text()}`, {
+    upstreamStatus: res.status,
+  });
 }
 
 function headers(): Record<string, string> {

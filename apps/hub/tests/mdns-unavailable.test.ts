@@ -28,10 +28,7 @@ vi.mock('../src/tailnet.js', () => ({
   isConfigured: vi.fn(() => false),
 }));
 
-async function makeService(opts: { mdns?: boolean; tailnet?: boolean } = {}) {
-  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
-  return createDefaultProvisioningService({ mdns: opts.mdns ?? true, tailnet: opts.tailnet ?? false });
-}
+import { makeService } from './helpers/provisioning.js';
 
 describe('mDNS infrastructure failure → MdnsUnavailableError', () => {
   beforeEach(() => {

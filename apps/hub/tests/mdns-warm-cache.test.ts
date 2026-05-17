@@ -46,10 +46,7 @@ vi.mock('../src/tailnet.js', () => ({
 // startSession has set the value).
 let preTaggedName = '';
 
-async function makeService() {
-  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
-  return createDefaultProvisioningService({ mdns: true, tailnet: false });
-}
+import { makeService } from './helpers/provisioning.js';
 
 describe('warm-cache fast path', () => {
   beforeEach(() => {

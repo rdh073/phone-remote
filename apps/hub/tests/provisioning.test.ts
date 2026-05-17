@@ -33,15 +33,7 @@ vi.mock('../src/tailnet.js', () => ({
   isConfigured: vi.fn(() => false),
 }));
 
-/**
- * Per-test service factory — replaces the old module-level singleton.
- * Each test constructs its own provisioning service with explicit
- * capabilities, exercising the DIP path that production now uses.
- */
-async function makeService(opts: { mdns?: boolean; tailnet?: boolean } = {}) {
-  const { createDefaultProvisioningService } = await import('../src/provisioning.js');
-  return createDefaultProvisioningService({ mdns: opts.mdns ?? true, tailnet: opts.tailnet ?? false });
-}
+import { makeService } from './helpers/provisioning.js';
 
 afterEach(() => {
   mockedExecFile.mockReset();
