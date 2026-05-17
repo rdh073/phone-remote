@@ -22,15 +22,20 @@ function ProvisioningModal() {
   const setTab = useProvisioningStore((s) => s.setTab);
   const refresh = useDevicesStore((s) => s.refresh);
   const tailnet = useConfigStore((s) => s.tailnet);
+  const mdns = useConfigStore((s) => s.mdns);
   const hasTailscaleStep = Boolean(session?.authKey && session?.loginServer);
+  // mdns === false means the hub's boot probe said the multicast socket can't
+  // bind on this host (avahi conflict, container netns, etc). QR is then
+  // structurally unavailable for ANY session kind on this hub, not just
+  // tailnet sessions. null/true → assume available (back-compat with old hubs).
+  const qrAvailable = mdns !== false;
 
   // The QR tab is LAN-only (mDNS doesn't cross WireGuard), so route a tailnet
   // session away from it even if a stale UI event tries to select QR.
-  // Defensive: if state ever puts us on 'qr' while tailscaled, bounce to
-  // 'manual' (Pairing-code) — QR can't reach a tailnet-only phone.
+  // Same redirect when the hub-wide mDNS capability is false.
   useEffect(() => {
-    if (hasTailscaleStep && tab === 'qr') setTab('manual');
-  }, [hasTailscaleStep, setTab, tab]);
+    if ((hasTailscaleStep || !qrAvailable) && tab === 'qr') setTab('manual');
+  }, [hasTailscaleStep, qrAvailable, setTab, tab]);
 
   return (
     <div className="fixed inset-0 ui-modal-overlay ui-modal-overlay-65 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -69,7 +74,7 @@ function ProvisioningModal() {
 
         {session && status !== 'done' && (
           <>
-            <TabSwitch tab={tab} onChange={setTab} hasTailscaleStep={hasTailscaleStep} />
+            <TabSwitch tab={tab} onChange={setTab} hasTailscaleStep={hasTailscaleStep} qrAvailable={qrAvailable} />
             {tab === 'tailnet' && session.authKey && session.loginServer && (
               <TailscaleStep
                 authKey={session.authKey}
@@ -77,7 +82,7 @@ function ProvisioningModal() {
                 onContinue={() => setTab('manual')}
               />
             )}
-            {tab === 'qr' && !hasTailscaleStep && (
+            {tab === 'qr' && !hasTailscaleStep && qrAvailable && (
               <QrPair
                 qrPayload={session.qrPayload}
                 status={status}
@@ -158,10 +163,12 @@ function TabSwitch({
   tab,
   onChange,
   hasTailscaleStep,
+  qrAvailable,
 }: {
   tab: ProvisioningTab;
   onChange: (t: ProvisioningTab) => void;
   hasTailscaleStep: boolean;
+  qrAvailable: boolean;
 }) {
   // Tabs are content-sized (no flex-1) so the strip reads as discrete pills
   // rather than a stretched row — labels vary too much in width for fair
@@ -211,7 +218,7 @@ function TabSwitch({
           Method
         </span>
       )}
-      {!hasTailscaleStep && (
+      {!hasTailscaleStep && qrAvailable && (
         <>
           <button
             type="button"

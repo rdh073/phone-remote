@@ -1,11 +1,13 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { getCapabilities } from '../capabilities.js';
 import { createAuthKey, expireAuthKey, getLoginServer, isConfigured } from '../tailnet.js';
 import { CircuitBreaker } from '../shared/circuit-breaker.js';
 import type {
   AdbCommandResult,
   AdbProvisioningPort,
+  CapabilitiesPort,
   Endpoint,
   ProvisioningDependencies,
   TailnetProvisioningPort,
@@ -25,9 +27,14 @@ export function createDefaultProvisioningDependencies(): ProvisioningDependencie
     adb: new AdbCliProvisioningPort(ADB, adbCircuit),
     tailnet: tailnetPort,
     mdns: new BonjourMdnsProvisioningPort(),
+    capabilities: capabilitiesPort,
     log: console,
   };
 }
+
+const capabilitiesPort: CapabilitiesPort = {
+  mdnsAvailable: () => getCapabilities().mdns,
+};
 
 class AdbCliProvisioningPort implements AdbProvisioningPort {
   constructor(

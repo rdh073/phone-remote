@@ -13,6 +13,7 @@ import {
   ProvisioningSessionError,
   SessionKindMismatchError,
 } from './errors.js';
+import type { CapabilitiesPort } from './types.js';
 import { ProvisioningSessionStore } from './session-store.js';
 import {
   FIXED_ADB_PORT,
@@ -153,6 +154,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
     requireSessionKind(session, 'lan',
       'QR pairing is unavailable in tailnet mode — mDNS multicast cannot cross the WireGuard tunnel. ' +
       'Use the Pairing code flow with the phone\'s tailnet IP instead.');
+    requireMdnsCapability(deps.capabilities);
     assertPairable(session);
     session.error = undefined;
 
@@ -278,6 +280,15 @@ function requireSessionKind(
 ): void {
   if (session.kind !== kind) {
     throw new SessionKindMismatchError([kind], session.kind, reason);
+  }
+}
+
+function requireMdnsCapability(capabilities: CapabilitiesPort): void {
+  if (!capabilities.mdnsAvailable()) {
+    throw new MdnsUnavailableError(
+      'mDNS is unavailable on this hub (boot probe failed: socket bind error, ' +
+        'avahi-daemon conflict, or container-blocked multicast). Use the Pairing code flow instead.',
+    );
   }
 }
 

@@ -78,9 +78,23 @@ export const LoginBodySchema = z.object({
 });
 export type LoginBody = z.infer<typeof LoginBodySchema>;
 
+/**
+ * Hub capabilities detected at boot. Once probed, immutable for the process
+ * lifetime. The frontend uses these to hide paths the hub structurally can't
+ * support (e.g. QR/mDNS pairing when the multicast socket can't bind).
+ */
+export type HubCapabilities = {
+  /** Whether mDNS multicast is reachable from the hub host (bonjour bind succeeded). */
+  mdns: boolean;
+  /** Whether a tailnet provider (currently Headscale) is configured and reachable. */
+  tailnet: boolean;
+};
+
 export type HealthResponse = {
   ok: boolean;
+  /** @deprecated read `capabilities.tailnet` instead. Kept for backward compat. */
   tailnet?: boolean;
+  capabilities: HubCapabilities;
 };
 
 export type AuthMeResponse = { user: string };

@@ -75,10 +75,21 @@ export interface ProvisioningLogPort {
   warn(message: string): void;
 }
 
+/**
+ * Capability snapshot consulted at request time. Implemented as a getter
+ * (not a value) so the deps object can be constructed before the boot probe
+ * has run — the service only reads it inside async request handlers.
+ */
+export interface CapabilitiesPort {
+  /** True iff the hub's mDNS socket bound successfully at boot. */
+  mdnsAvailable(): boolean;
+}
+
 export interface ProvisioningDependencies {
   adb: AdbProvisioningPort;
   tailnet: TailnetProvisioningPort;
   mdns: MdnsProvisioningPort;
+  capabilities: CapabilitiesPort;
   log?: ProvisioningLogPort;
   now?: () => number;
   randomHex?: (bytes: number) => string;

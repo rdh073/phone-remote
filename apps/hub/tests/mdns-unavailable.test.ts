@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Isolated from provisioning.test.ts so we can override the bonjour-service
 // mock to simulate a bind failure (EADDRINUSE, container-blocked multicast,
@@ -28,9 +28,17 @@ vi.mock('../src/tailnet.js', () => ({
   isConfigured: vi.fn(() => false),
 }));
 
+async function setTestCapabilities(mdns: boolean, tailnet = false): Promise<void> {
+  const { setCapabilities } = await import('../src/capabilities.js');
+  setCapabilities({ mdns, tailnet });
+}
+
 describe('mDNS infrastructure failure → MdnsUnavailableError', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
+    // Capability is `true` here so the gate doesn't short-circuit — we want
+    // the test to exercise the RUNTIME bind-failure path, not the boot probe.
+    await setTestCapabilities(true);
   });
 
   it('Bonjour bind failure during open() rejects with typed error (not generic 500)', async () => {
@@ -42,5 +50,20 @@ describe('mDNS infrastructure failure → MdnsUnavailableError', () => {
     const err = await pairSessionViaQr(start.id).catch((e) => e);
     expect(err.message).toMatch(/EADDRINUSE/);
     expect(err.message).toMatch(/failed to open mDNS socket/);
+  });
+
+  it('capability false short-circuits before Bonjour is touched', async () => {
+    // Flip the boot-probe result. The service must refuse without ever
+    // trying to instantiate Bonjour (so the EADDRINUSE message from the
+    // mock would NOT appear).
+    await setTestCapabilities(false);
+    const { startSession, pairSessionViaQr, MdnsUnavailableError } = await import(
+      '../src/provisioning.js'
+    );
+    const start = await startSession();
+    const err = await pairSessionViaQr(start.id).catch((e) => e);
+    expect(err).toBeInstanceOf(MdnsUnavailableError);
+    expect(err.message).toMatch(/boot probe failed/);
+    expect(err.message).not.toMatch(/EADDRINUSE/);
   });
 });

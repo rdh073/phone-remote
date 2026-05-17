@@ -33,6 +33,16 @@ vi.mock('../src/tailnet.js', () => ({
   isConfigured: vi.fn(() => false),
 }));
 
+/**
+ * Re-set capabilities after vi.resetModules() — the capabilities module has a
+ * top-level cache that resetModules wipes, so each test that resets must
+ * dynamically re-import + set before exercising the provisioning service.
+ */
+async function setTestCapabilities(mdns = true, tailnet = false): Promise<void> {
+  const { setCapabilities } = await import('../src/capabilities.js');
+  setCapabilities({ mdns, tailnet });
+}
+
 afterEach(() => {
   mockedExecFile.mockReset();
 });
@@ -41,6 +51,7 @@ describe('provisioning pairSession', () => {
   beforeEach(async () => {
     vi.resetModules();
     mockedExecFile.mockReset();
+    await setTestCapabilities();
   });
 
   it(
@@ -70,6 +81,7 @@ describe('session kind discriminator', () => {
   beforeEach(async () => {
     vi.resetModules();
     mockedExecFile.mockReset();
+    await setTestCapabilities();
   });
 
   it('tailnet-mode session refuses /qr-pair with SessionKindMismatchError', async () => {
@@ -110,6 +122,7 @@ describe('pairSessionViaQr mdns-timeout circuit breaker', () => {
     vi.resetModules();
     mockedExecFile.mockReset();
     vi.useFakeTimers();
+    await setTestCapabilities();
   });
 
   afterEach(() => {
