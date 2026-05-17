@@ -15,6 +15,7 @@ import {
 } from './errors.js';
 import type { CapabilitiesPort } from './types.js';
 import { ProvisioningSessionStore } from './session-store.js';
+import { transition } from './state.js';
 import {
   FIXED_ADB_PORT,
   type Endpoint,
@@ -110,7 +111,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
         // best-effort
       }
     }
-    session.status = 'revoked';
+    transition(session, 'revoked');
     store.delete(id);
   }
 
@@ -121,7 +122,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
       return { serial: session.serial };
     }
     assertPairable(session);
-    session.status = 'pending';
+    transition(session, 'pending');
     session.error = undefined;
 
     const pairEndpoint = { ip: body.ip, port: body.pairPort };
@@ -176,7 +177,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
       if (session.status === 'pair-complete' && session.pairIp) {
         pairIp = session.pairIp;
       } else {
-        session.status = 'pending';
+        transition(session, 'pending');
         const attempt = session.qrAttempts;
         session.qrAttempts += 1;
         const discoveryTimeout = attempt === 0 ? QR_DISCOVERY_TIMEOUT_FAST_MS : QR_DISCOVERY_TIMEOUT_SLOW_MS;
@@ -184,7 +185,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
         await pairOrThrow(pairing, session.qrPassword);
         pairIp = pairing.ip;
         session.pairIp = pairIp;
-        session.status = 'pair-complete';
+        transition(session, 'pair-complete');
 
         try {
           const connect = await discovery.waitForConnect(CONNECT_DISCOVERY_TIMEOUT_MS);
@@ -253,12 +254,12 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
   }
 
   function markPaired(session: ProvisioningSession, serial: string): void {
-    session.status = 'paired';
+    transition(session, 'paired');
     session.serial = serial;
   }
 
   function markFailed(session: ProvisioningSession, err: unknown): void {
-    session.status = 'failed';
+    transition(session, 'failed');
     session.error = errorMessage(err);
   }
 
