@@ -30,7 +30,7 @@ vi.mock('../src/tailnet.js', () => ({
   createAuthKey: vi.fn(),
   expireAuthKey: vi.fn(),
   getLoginServer: () => 'https://example.invalid',
-  isConfigured: () => false,
+  isConfigured: vi.fn(() => false),
 }));
 
 afterEach(() => {
@@ -64,6 +64,45 @@ describe('provisioning pairSession', () => {
     },
     20_000,
   );
+});
+
+describe('session kind discriminator', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    mockedExecFile.mockReset();
+  });
+
+  it('tailnet-mode session refuses /qr-pair with SessionKindMismatchError', async () => {
+    const tailnet = await import('../src/tailnet.js');
+    vi.mocked(tailnet.isConfigured).mockReturnValue(true);
+    vi.mocked(tailnet.createAuthKey).mockResolvedValue({ id: '1', key: 'tskey-test' });
+
+    const { startSession, pairSessionViaQr, SessionKindMismatchError } = await import(
+      '../src/provisioning.js'
+    );
+    const start = await startSession();
+    expect(start.authKey).toBe('tskey-test');
+
+    await expect(pairSessionViaQr(start.id)).rejects.toBeInstanceOf(SessionKindMismatchError);
+    const err = await pairSessionViaQr(start.id).catch((e) => e);
+    expect(err.expected).toEqual(['lan']);
+    expect(err.actual).toBe('tailnet');
+    expect(err.message).toMatch(/mDNS multicast cannot cross/);
+
+    vi.mocked(tailnet.isConfigured).mockReturnValue(false);
+  });
+
+  it('lan-mode session accepts /qr-pair (legacy path stays open)', async () => {
+    const tailnet = await import('../src/tailnet.js');
+    vi.mocked(tailnet.isConfigured).mockReturnValue(false);
+
+    const { startSession } = await import('../src/provisioning.js');
+    const start = await startSession();
+    expect(start.authKey).toBeNull();
+    // No mismatch error — kind === 'lan' passes the gate. (Pairing then
+    // proceeds into mDNS, which is the behaviour covered by the mdns-timeout
+    // tests below.)
+  });
 });
 
 describe('pairSessionViaQr mdns-timeout circuit breaker', () => {

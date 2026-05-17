@@ -25,3 +25,14 @@ export class ProvisioningSessionError extends Error {
     this.name = 'ProvisioningSessionError';
   }
 }
+
+export class SessionKindMismatchError extends Error {
+  constructor(
+    public expected: readonly ('tailnet' | 'lan')[],
+    public actual: 'tailnet' | 'lan',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'SessionKindMismatchError';
+  }
+}

@@ -2,8 +2,21 @@ export const FIXED_ADB_PORT = 5555;
 
 export type SessionStatus = 'pending' | 'pair-complete' | 'paired' | 'failed' | 'revoked';
 
+/**
+ * Provisioning session kind. Decided at startSession() based on whether a
+ * tailnet auth-key was minted. Immutable for the session lifetime.
+ *
+ * - 'tailnet': phone joins via Headscale preauth-key, then is reachable as
+ *   100.x.y.z. mDNS/QR is structurally impossible (multicast doesn't cross
+ *   WireGuard) — only manual pairing-code is valid.
+ * - 'lan': phone is on the same L2 segment as the hub. Both QR (mDNS) and
+ *   manual pairing-code are valid.
+ */
+export type SessionKind = 'tailnet' | 'lan';
+
 export interface ProvisioningSession {
   id: string;
+  kind: SessionKind;
   authKeyId: string | null;
   authKey: string | null;
   loginServer: string | null;

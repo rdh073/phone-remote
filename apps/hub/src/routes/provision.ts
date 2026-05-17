@@ -11,6 +11,7 @@ import {
   ConnectDiscoveryNeededError,
   MdnsDiscoveryTimeoutError,
   ProvisioningSessionError,
+  SessionKindMismatchError,
   connectByIp,
   deleteSession,
   pairSession,
@@ -90,6 +91,9 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
 
 function mapProvisioningFailure(err: unknown): Error {
   if (err instanceof AppError) return err;
+  if (err instanceof SessionKindMismatchError) {
+    return new AppError(422, 'session_kind_mismatch', err.message, { cause: err });
+  }
   if (err instanceof AdbConnectFailedError) {
     return new AppError(502, 'adb_connect_failed', err.message, { cause: err });
   }

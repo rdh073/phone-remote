@@ -16,6 +16,7 @@ export {
   ConnectDiscoveryNeededError,
   MdnsDiscoveryTimeoutError,
   ProvisioningSessionError,
+  SessionKindMismatchError,
 } from './provisioning/errors.js';
 export type {
   AdbProvisioningPort,

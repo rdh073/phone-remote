@@ -9,6 +9,7 @@ import {
   AdbConnectFailedError,
   ConnectDiscoveryNeededError,
   ProvisioningSessionError,
+  SessionKindMismatchError,
 } from './errors.js';
 import { ProvisioningSessionStore } from './session-store.js';
 import {
@@ -16,6 +17,7 @@ import {
   type Endpoint,
   type ProvisioningDependencies,
   type ProvisioningSession,
+  type SessionKind,
 } from './types.js';
 
 const PHONE_TAG = process.env.PROVISION_TAG ?? 'tag:phone';
@@ -47,6 +49,7 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
     const qrPassword = randomHex(8);
     const session: ProvisioningSession = {
       id: randomHex(8),
+      kind: tailnet ? 'tailnet' : 'lan',
       authKeyId: key?.id ?? null,
       authKey: key?.key ?? null,
       loginServer: tailnet ? deps.tailnet.getLoginServer() : null,
@@ -131,6 +134,9 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
       invariant(session.serial, 'paired session is missing serial');
       return { serial: session.serial };
     }
+    requireSessionKind(session, 'lan',
+      'QR pairing is unavailable in tailnet mode — mDNS multicast cannot cross the WireGuard tunnel. ' +
+      'Use the Pairing code flow with the phone\'s tailnet IP instead.');
     assertPairable(session);
     session.error = undefined;
 
@@ -243,6 +249,16 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
 function assertPairable(session: ProvisioningSession): void {
   if (session.status === 'revoked') {
     throw new ProvisioningSessionError(`session already ${session.status}`);
+  }
+}
+
+function requireSessionKind(
+  session: ProvisioningSession,
+  kind: SessionKind,
+  reason: string,
+): void {
+  if (session.kind !== kind) {
+    throw new SessionKindMismatchError([kind], session.kind, reason);
   }
 }
 
