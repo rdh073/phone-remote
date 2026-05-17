@@ -11,8 +11,11 @@ export type SessionStatus = 'pending' | 'pair-complete' | 'paired' | 'failed' | 
  *   WireGuard) — only manual pairing-code is valid.
  * - 'lan': phone is on the same L2 segment as the hub. Both QR (mDNS) and
  *   manual pairing-code are valid.
+ *
+ * Sourced from the protocol so client + server share one source of truth.
  */
-export type SessionKind = 'tailnet' | 'lan';
+import type { SessionKind } from '@phone-remote/protocol';
+export type { SessionKind };
 
 export interface ProvisioningSession {
   id: string;

@@ -63,8 +63,19 @@ export const ServerMessage = z.discriminatedUnion('kind', [
 ]);
 export type ServerMessage = z.infer<typeof ServerMessage>;
 
+/**
+ * Provisioning session mode. Decided server-side at start() and immutable for
+ * the session lifetime. Carried in StartProvisionResponse so the frontend can
+ * read it directly instead of inferring from (authKey && loginServer) — those
+ * were a proxy for the same fact, and an empty-string authKey from a
+ * misbehaving upstream would have made the proxy disagree with the server.
+ */
+export const SessionKindSchema = z.enum(['tailnet', 'lan']);
+export type SessionKind = z.infer<typeof SessionKindSchema>;
+
 export const StartProvisionResponse = z.object({
   sessionId: z.string(),
+  kind: SessionKindSchema,
   authKey: z.string().nullable(),
   loginServer: z.string().nullable(),
   qrPayload: z.string(),

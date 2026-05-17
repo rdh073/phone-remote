@@ -23,7 +23,11 @@ function ProvisioningModal() {
   const refresh = useDevicesStore((s) => s.refresh);
   const tailnet = useConfigStore((s) => s.tailnet);
   const mdns = useConfigStore((s) => s.mdns);
-  const hasTailscaleStep = Boolean(session?.authKey && session?.loginServer);
+  // Source of truth: server-side session.kind, immutable and on the wire since
+  // packages/protocol added SessionKindSchema. The old derivation
+  // `Boolean(authKey && loginServer)` was a proxy and disagreed with the
+  // server if Headscale ever returned an empty-string authKey.
+  const hasTailscaleStep = session?.kind === 'tailnet';
   // mdns === false means the hub's boot probe said the multicast socket can't
   // bind on this host (avahi conflict, container netns, etc). QR is then
   // structurally unavailable for ANY session kind on this hub, not just

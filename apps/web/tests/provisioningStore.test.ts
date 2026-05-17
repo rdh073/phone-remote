@@ -23,6 +23,7 @@ describe('useProvisioningStore workflow state', () => {
     useProvisioningStore.setState({
       session: {
         sessionId: 's1',
+        kind: 'tailnet',
         authKey: 'tskey-auth',
         loginServer: 'https://headscale.test',
         qrPayload: 'WIFI:T:ADB;S:x;P:y;;',

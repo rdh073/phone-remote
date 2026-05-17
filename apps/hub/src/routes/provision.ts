@@ -37,6 +37,7 @@ export function registerProvisionRoutes(app: FastifyInstance): void {
       const s = await req.server.provisioning.startSession();
       return {
         sessionId: s.id,
+        kind: s.kind,
         authKey: s.authKey,
         loginServer: s.loginServer,
         qrPayload: s.qrPayload,

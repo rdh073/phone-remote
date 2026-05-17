@@ -175,7 +175,10 @@ export const useProvisioningStore = create<State>()((set, get) => ({
 }));
 
 function hasTailscaleStep(session: StartProvisionResponse | null): boolean {
-  return Boolean(session?.authKey && session?.loginServer);
+  // Read the server-side discriminator (immutable per session). Was previously
+  // `Boolean(session?.authKey && session?.loginServer)` — a proxy that could
+  // disagree with the server if upstream returned an empty-string authKey.
+  return session?.kind === 'tailnet';
 }
 
 function resetState(): Partial<State> {
