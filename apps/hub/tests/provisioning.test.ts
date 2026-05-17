@@ -77,6 +77,71 @@ describe('provisioning pairSession', () => {
   );
 });
 
+describe('per-session gate (race tightening)', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    mockedExecFile.mockReset();
+    await setTestCapabilities();
+  });
+
+  it('two concurrent /pair calls with same body coalesce to one execution', async () => {
+    const { startSession, pairSession } = await import('../src/provisioning.js');
+    const start = await startSession();
+    const body = {
+      ip: '192.168.0.10',
+      pairPort: 38343,
+      pairCode: '123456',
+      connectPort: 5555,
+    };
+
+    const [a, b] = await Promise.all([pairSession(start.id, body), pairSession(start.id, body)]);
+    expect(a).toEqual(b);
+    // adb pair + adb connect + adb tcpip + adb connect = 4 exec calls, NOT 8.
+    expect(mockedExecFile).toHaveBeenCalledTimes(4);
+  });
+
+  it('concurrent /pair and /qr-pair on same session → IdempotencyConflictError', async () => {
+    const { startSession, pairSession, pairSessionViaQr } = await import('../src/provisioning.js');
+    const { IdempotencyConflictError } = await import('../src/shared/idempotency.js');
+    const start = await startSession();
+
+    // Kick off /pair first — registers in the session gate during this same
+    // microtask. /qr-pair then hits a different fingerprint and rejects sync.
+    const inflight = pairSession(start.id, {
+      ip: '192.168.0.10',
+      pairPort: 38343,
+      pairCode: '123456',
+      connectPort: 5555,
+    });
+    const conflict = pairSessionViaQr(start.id);
+    await expect(conflict).rejects.toBeInstanceOf(IdempotencyConflictError);
+    // The original /pair still completes — we want to verify the gate
+    // protects state, not that it cancels in-flight work.
+    await expect(inflight).resolves.toEqual({ serial: '192.168.0.10:5555' });
+  });
+
+  it('two concurrent /pair calls with different bodies → second is rejected', async () => {
+    const { startSession, pairSession } = await import('../src/provisioning.js');
+    const { IdempotencyConflictError } = await import('../src/shared/idempotency.js');
+    const start = await startSession();
+
+    const a = pairSession(start.id, {
+      ip: '192.168.0.10',
+      pairPort: 38343,
+      pairCode: '123456',
+      connectPort: 5555,
+    });
+    const b = pairSession(start.id, {
+      ip: '192.168.0.11',
+      pairPort: 38343,
+      pairCode: '654321',
+      connectPort: 5555,
+    });
+    await expect(b).rejects.toBeInstanceOf(IdempotencyConflictError);
+    await expect(a).resolves.toEqual({ serial: '192.168.0.10:5555' });
+  });
+});
+
 describe('session kind discriminator', () => {
   beforeEach(async () => {
     vi.resetModules();

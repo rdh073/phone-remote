@@ -31,8 +31,13 @@ const CONNECT_DISCOVERY_TIMEOUT_MS = 15_000;
 
 export function createProvisioningService(deps: ProvisioningDependencies) {
   const store = new ProvisioningSessionStore();
-  const pairGate = new IdempotencyGate<string, { serial: string }>();
-  const qrGate = new IdempotencyGate<string, { serial: string }>();
+  // One gate per session — NOT per endpoint. Previously /pair and /qr-pair
+  // had independent gates, which let an operator (or a stale UI event) run
+  // both flows in parallel on the same session, racing over session.status /
+  // .pairIp / .error. Fingerprints carry the op kind so same-op same-body
+  // calls still coalesce, while a cross-op concurrent attempt gets a clean
+  // 409 IdempotencyConflictError instead of silent state corruption.
+  const sessionGate = new IdempotencyGate<string, { serial: string }>();
   const now = deps.now ?? Date.now;
   const randomHex = deps.randomHex ?? defaultRandomHex;
   const sleep = deps.sleep ?? defaultSleep;
@@ -69,11 +74,13 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
   }
 
   async function pairSession(id: string, body: PairRequest): Promise<{ serial: string }> {
-    return pairGate.run(id, stableFingerprint(body), () => pairSessionInner(id, body));
+    return sessionGate.run(id, stableFingerprint({ op: 'pair', body }), () =>
+      pairSessionInner(id, body),
+    );
   }
 
   async function pairSessionViaQr(id: string, connectPortOverride?: number): Promise<{ serial: string }> {
-    return qrGate.run(id, stableFingerprint({ connectPortOverride }), () =>
+    return sessionGate.run(id, stableFingerprint({ op: 'qr', connectPortOverride }), () =>
       pairSessionViaQrInner(id, connectPortOverride),
     );
   }
