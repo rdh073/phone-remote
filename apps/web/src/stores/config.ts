@@ -19,14 +19,8 @@ export const useConfigStore = create<ConfigState>()((set) => ({
 
   load: async () => {
     try {
-      const data = await getHealth();
-      // Prefer the new shape (capabilities.*); fall back to the deprecated
-      // top-level `tailnet` flag for older hubs.
-      const caps = data.capabilities;
-      set({
-        tailnet: caps ? caps.tailnet : Boolean(data.tailnet),
-        mdns: caps ? caps.mdns : null,
-      });
+      const { capabilities } = await getHealth();
+      set({ tailnet: capabilities.tailnet, mdns: capabilities.mdns });
     } catch {
       set({ tailnet: false, mdns: false });
     }

@@ -103,8 +103,6 @@ export type HubCapabilities = {
 
 export type HealthResponse = {
   ok: boolean;
-  /** @deprecated read `capabilities.tailnet` instead. Kept for backward compat. */
-  tailnet?: boolean;
   capabilities: HubCapabilities;
 };
 
