@@ -305,8 +305,8 @@ const ollamaFetch: typeof fetch = ((input: Parameters<typeof fetch>[0], init?: R
 
 const PROVIDER_SPECS: ProviderSpec[] = [
   {
-    id: 'claude-code',
-    label: 'Claude Code (OAuth)',
+    id: 'claude-oauth',
+    label: 'Claude OAuth',
     get defaultModel() {
       return defaultModel();
     },
@@ -403,7 +403,7 @@ function isProviderId(v: unknown): v is ProviderId {
 
 async function buildModel(id: ProviderId, modelId: string): Promise<LanguageModel> {
   switch (id) {
-    case 'claude-code': {
+    case 'claude-oauth': {
       const token = await getValidAccessToken();
       const provider = createAnthropic({
         authToken: token,

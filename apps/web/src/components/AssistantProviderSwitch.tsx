@@ -74,7 +74,7 @@ export function AssistantProviderSwitch() {
               <span className="text-zinc-300">GOOGLE_GENERATIVE_AI_API_KEY</span>,{' '}
               <span className="text-zinc-300">DEEPSEEK_API_KEY</span>,{' '}
               <span className="text-zinc-300">OPENAI_COMPATIBLE_BASE_URL</span>, run{' '}
-              <span className="text-zinc-300">claude</span> to log Claude Code OAuth, or start
+              <span className="text-zinc-300">claude</span> to log Claude OAuth, or start
               Ollama at <span className="text-zinc-300">127.0.0.1:11434</span>.
             </div>
           )}
@@ -207,7 +207,7 @@ function ProviderRow({
 
 function shortProvider(label: string | undefined): string {
   if (!label) return '—';
-  // Strip trailing parens: "Claude Code (OAuth)" → "Claude Code"
+  // Strip trailing parens, e.g. "Foo (Bar)" → "Foo"
   return label.replace(/\s*\(.*?\)\s*$/, '');
 }
 

@@ -157,7 +157,7 @@ Press \`@\` to open the device picker (or click the @ button). Pick a device;
 strings directly, so the mention routes the call to the right phone.
 
 ## Providers
-Header dropdown switches between Claude Code OAuth, Anthropic API, OpenAI,
+Header dropdown switches between Claude OAuth, Anthropic API, OpenAI,
 Gemini, DeepSeek, Ollama, and a generic OpenAI-compatible slot. Only the
 providers whose env vars are set on the hub are listed.
 

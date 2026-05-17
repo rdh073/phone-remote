@@ -111,7 +111,7 @@ export const DeviceShellBodySchema = z.object({
 export type DeviceShellBody = z.infer<typeof DeviceShellBodySchema>;
 
 export const ProviderIdSchema = z.enum([
-  'claude-code',
+  'claude-oauth',
   'anthropic-api',
   'openai',
   'google',
