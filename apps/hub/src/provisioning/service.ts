@@ -11,9 +11,8 @@ import {
   ConnectDiscoveryNeededError,
   MdnsUnavailableError,
   ProvisioningSessionError,
-  SessionKindMismatchError,
 } from './errors.js';
-import type { CapabilitiesPort } from './types.js';
+import { assertPairable, requireMdnsCapability, requireSessionKind } from './guards.js';
 import { ProvisioningSessionStore } from './session-store.js';
 import { transition } from './state.js';
 import {
@@ -21,7 +20,6 @@ import {
   type Endpoint,
   type ProvisioningDependencies,
   type ProvisioningSession,
-  type SessionKind,
 } from './types.js';
 
 const PHONE_TAG = process.env.PROVISION_TAG ?? 'tag:phone';
@@ -270,31 +268,6 @@ export function createProvisioningService(deps: ProvisioningDependencies) {
     connectByIp,
     deleteSession,
   };
-}
-
-function assertPairable(session: ProvisioningSession): void {
-  if (session.status === 'revoked') {
-    throw new ProvisioningSessionError(`session already ${session.status}`);
-  }
-}
-
-function requireSessionKind(
-  session: ProvisioningSession,
-  kind: SessionKind,
-  reason: string,
-): void {
-  if (session.kind !== kind) {
-    throw new SessionKindMismatchError([kind], session.kind, reason);
-  }
-}
-
-function requireMdnsCapability(capabilities: CapabilitiesPort): void {
-  if (!capabilities.mdnsAvailable()) {
-    throw new MdnsUnavailableError(
-      'mDNS is unavailable on this hub (boot probe failed: socket bind error, ' +
-        'avahi-daemon conflict, or container-blocked multicast). Use the Pairing code flow instead.',
-    );
-  }
 }
 
 function parseEndpoint(serial: string): [string, number] {
