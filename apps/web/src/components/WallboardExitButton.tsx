@@ -43,11 +43,11 @@ export function WallboardExitButton() {
         />
         <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
         <span
-          className="ml-1 inline-flex items-baseline gap-0.5 font-mono text-[10px] tabular-nums text-zinc-300"
+          className="ml-1 inline-flex items-baseline gap-0.5 font-mono text-[0.625rem] tabular-nums text-zinc-300"
           aria-live="polite"
         >
           <span className="text-zinc-100">{cols}</span>
-          <span className="text-zinc-500 text-[9px] uppercase tracking-[0.14em]">c</span>
+          <span className="text-zinc-500 text-[0.5625rem] uppercase tracking-[0.14em]">c</span>
         </span>
       </div>
       <button
@@ -55,11 +55,11 @@ export function WallboardExitButton() {
         onClick={() => setWallboard(false)}
         title="Exit wallboard (W)"
         aria-label="Exit wallboard"
-        className="h-full inline-flex items-center gap-1.5 px-2.5 font-mono text-[10px] uppercase tracking-[0.16em] border-l border-zinc-800/70 hover:bg-zinc-800/70 hover:text-cyan-100 focus:outline-none focus-visible:bg-zinc-800/70"
+        className="h-full inline-flex items-center gap-1.5 px-2.5 font-mono text-[0.625rem] uppercase tracking-[0.16em] border-l border-zinc-800/70 hover:bg-zinc-800/70 hover:text-cyan-100 focus:outline-none focus-visible:bg-zinc-800/70"
       >
         <Minimize2 size={11} />
         <span>exit</span>
-        <kbd className="ml-0.5 inline-flex h-4 items-center rounded border border-zinc-700 bg-zinc-900 ui-chip-surface px-1 text-[9px] text-zinc-400">
+        <kbd className="ml-0.5 inline-flex h-4 items-center rounded border border-zinc-700 bg-zinc-900 ui-chip-surface px-1 text-[0.5625rem] text-zinc-400">
           W
         </kbd>
       </button>

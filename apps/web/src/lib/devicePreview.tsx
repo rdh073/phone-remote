@@ -20,7 +20,7 @@ export function selectedPreview(
   return (
     <div className="space-y-2">
       {opts?.intro && <p>{opts.intro}</p>}
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[11px] text-zinc-300">
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[0.6875rem] text-zinc-300">
         {head.map((serial) => {
           const d = bySerial.get(serial);
           const label = labels[serial];
@@ -39,7 +39,7 @@ export function selectedPreview(
         })}
       </ul>
       {more > 0 && (
-        <p className="text-[11px] text-zinc-500 font-mono">+ {more} more</p>
+        <p className="text-[0.6875rem] text-zinc-500 font-mono">+ {more} more</p>
       )}
     </div>
   );

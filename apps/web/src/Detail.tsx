@@ -132,9 +132,9 @@ export function Detail() {
           <div className="min-w-0">
             <div className="text-zinc-200 truncate font-medium">{displayName}</div>
             {label && device?.model && (
-              <div className="text-[11px] text-zinc-500 truncate">{device.model}</div>
+              <div className="text-[0.6875rem] text-zinc-500 truncate">{device.model}</div>
             )}
-            {location ? <div className="text-[11px] text-zinc-500 truncate">{location}</div> : null}
+            {location ? <div className="text-[0.6875rem] text-zinc-500 truncate">{location}</div> : null}
             <div className="font-mono text-zinc-500 truncate">{detailSerial}</div>
           </div>
           <span className={`h-7 inline-flex items-center rounded border px-2.5 ${
@@ -160,7 +160,7 @@ export function Detail() {
                 <ChevronLeft size={14} />
               </button>
               <span
-                className="h-8 inline-flex items-center rounded ui-chip-surface px-2 font-mono text-[10px] tabular-nums text-zinc-300"
+                className="h-8 inline-flex items-center rounded ui-chip-surface px-2 font-mono text-[0.625rem] tabular-nums text-zinc-300"
                 title={`Device ${idx + 1} of ${visible.length} visible`}
                 aria-label={`Device ${idx + 1} of ${visible.length}`}
               >
@@ -207,7 +207,7 @@ export function Detail() {
             </div>
           </div>
           <aside className="border-l border-zinc-800 p-3 overflow-y-auto ui-modal-surface">
-            <div className="mb-3 border border-zinc-800 rounded p-2 text-[11px] text-zinc-400 leading-relaxed">
+            <div className="mb-3 border border-zinc-800 rounded p-2 text-[0.6875rem] text-zinc-400 leading-relaxed">
               <span className="text-zinc-200">←/→</span> or <span className="text-zinc-200">P/N</span> step
               between devices · <span className="text-zinc-200">S</span> sync · <span className="text-zinc-200">⇧L</span> lock input ·
               <span className="text-zinc-200"> Esc</span> close.

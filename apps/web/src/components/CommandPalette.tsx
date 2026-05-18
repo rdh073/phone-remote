@@ -149,9 +149,9 @@ export function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type to jump to a device, scene, or action…"
             aria-label="Command palette query"
-            className="flex-1 h-7 bg-transparent text-[13px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none font-mono"
+            className="flex-1 h-7 bg-transparent text-[0.8125rem] text-zinc-100 placeholder:text-zinc-600 focus:outline-none font-mono"
           />
-          <kbd className="inline-flex h-5 items-center rounded ui-chip-surface px-1.5 font-mono text-[10px] text-zinc-400">
+          <kbd className="inline-flex h-5 items-center rounded ui-chip-surface px-1.5 font-mono text-[0.625rem] text-zinc-400">
             esc
           </kbd>
         </div>
@@ -162,11 +162,11 @@ export function CommandPalette() {
             renderGrouped(filtered, highlight, setHighlight)
           )}
         </div>
-        <footer className="flex items-center justify-between px-3 py-1.5 border-t border-zinc-800/70 text-[10px] font-mono uppercase tracking-[0.16em] text-zinc-600">
+        <footer className="flex items-center justify-between px-3 py-1.5 border-t border-zinc-800/70 text-[0.625rem] font-mono uppercase tracking-[0.16em] text-zinc-600">
           <span className="flex items-center gap-3">
-            <kbd className="inline-flex h-4 items-center rounded ui-chip-surface px-1 text-[9px] text-zinc-400">↑↓</kbd>
+            <kbd className="inline-flex h-4 items-center rounded ui-chip-surface px-1 text-[0.5625rem] text-zinc-400">↑↓</kbd>
             navigate
-            <kbd className="inline-flex h-4 items-center rounded ui-chip-surface px-1 text-[9px] text-zinc-400">⏎</kbd>
+            <kbd className="inline-flex h-4 items-center rounded ui-chip-surface px-1 text-[0.5625rem] text-zinc-400">⏎</kbd>
             commit
           </span>
           <span>{filtered.length} result{filtered.length === 1 ? '' : 's'}</span>
@@ -190,7 +190,7 @@ function renderGrouped(entries: Entry[], highlight: number, setHighlight: (n: nu
   }
   return groups.map((g) => (
     <section key={g.name} className="py-0.5">
-      <div className="px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{g.name}</div>
+      <div className="px-3 py-1 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">{g.name}</div>
       <ul>
         {g.rows.map(({ entry, idx }) => (
           <li key={entry.id}>
@@ -199,7 +199,7 @@ function renderGrouped(entries: Entry[], highlight: number, setHighlight: (n: nu
               data-idx={idx}
               onMouseEnter={() => setHighlight(idx)}
               onClick={() => entry.perform()}
-              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[13px] transition-colors duration-[100ms] ${
+              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[0.8125rem] transition-colors duration-[100ms] ${
                 idx === highlight ? 'bg-cyan-500/10 text-cyan-100' : 'text-zinc-300 hover:bg-zinc-800/60'
               }`}
             >
@@ -207,11 +207,11 @@ function renderGrouped(entries: Entry[], highlight: number, setHighlight: (n: nu
               <span className="flex-1 min-w-0 flex items-baseline gap-2">
                 <span className="truncate">{entry.label}</span>
                 {entry.hint && (
-                  <span className="truncate text-[11px] text-zinc-500 font-mono">{entry.hint}</span>
+                  <span className="truncate text-[0.6875rem] text-zinc-500 font-mono">{entry.hint}</span>
                 )}
               </span>
               {entry.rightHint && (
-                <span className="shrink-0 text-[10px] font-mono uppercase tracking-[0.14em] text-zinc-500">
+                <span className="shrink-0 text-[0.625rem] font-mono uppercase tracking-[0.14em] text-zinc-500">
                   {entry.rightHint}
                 </span>
               )}
@@ -720,7 +720,7 @@ function useEntries({ close }: { close: () => void }): Entry[] {
               <>
                 Use a template with placeholders. Devices are numbered in their current order.
                 <br />
-                <span className="font-mono text-[11px] text-zinc-400">
+                <span className="font-mono text-[0.6875rem] text-zinc-400">
                   {'{i}'} 1-indexed · {'{n}'} 0-indexed · {'{model}'} · {'{serial-tail}'} · {'{label}'}
                 </span>
                 <br />

@@ -123,14 +123,14 @@ function ContextMenuRow({
       role="menuitem"
       onMouseEnter={onHover}
       onClick={onCommit}
-      className={`flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-left text-[12.5px] transition-colors duration-[100ms] ${tone}`}
+      className={`flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-left text-[0.78125rem] transition-colors duration-[100ms] ${tone}`}
     >
       <span className={`shrink-0 ${item.danger ? 'text-rose-300' : active ? 'text-cyan-300' : 'text-zinc-500'}`}>
         {item.icon}
       </span>
       <span className="flex-1 min-w-0 truncate">{item.label}</span>
       {item.hint && (
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{item.hint}</span>
+        <span className="shrink-0 font-mono text-[0.625rem] uppercase tracking-[0.14em] text-zinc-500">{item.hint}</span>
       )}
     </button>
   );

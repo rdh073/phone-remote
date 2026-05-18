@@ -148,14 +148,14 @@ export function Assistant() {
       {error && (
         <div
           role="alert"
-          className="mx-4 mb-2 shrink-0 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[13px] text-rose-200"
+          className="mx-4 mb-2 shrink-0 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[0.8125rem] text-rose-200"
         >
           {error.message}
           {messages.length > 0 && (
             <button
               type="button"
               onClick={() => regenerate()}
-              className="ml-2 font-mono text-[11px] uppercase tracking-[0.06em] underline decoration-rose-300/40 hover:decoration-rose-200"
+              className="ml-2 font-mono text-[0.6875rem] uppercase tracking-[0.06em] underline decoration-rose-300/40 hover:decoration-rose-200"
             >
               retry
             </button>
@@ -199,7 +199,7 @@ export function Assistant() {
         title="Expand assistant"
         className="flex h-full w-9 shrink-0 items-center justify-center border-l border-zinc-800 ui-assistant-surface text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-inset"
       >
-        <span className="origin-center -rotate-90 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.18em]">
+        <span className="origin-center -rotate-90 whitespace-nowrap font-mono text-[0.625rem] uppercase tracking-[0.18em]">
           Assistant
         </span>
       </button>
@@ -251,7 +251,7 @@ function PaneChyron({
   onClose: () => void;
 }) {
   return (
-    <div className="flex h-8 shrink-0 items-center border-b border-zinc-800 ui-assistant-surface px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+    <div className="flex h-8 shrink-0 items-center border-b border-zinc-800 ui-assistant-surface px-3 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-zinc-400">
       <div
         className={`flex w-full items-center justify-between gap-2 ${
           fullscreen ? 'mx-auto max-w-[760px]' : ''
@@ -263,7 +263,7 @@ function PaneChyron({
             type="button"
             onClick={onCollapse}
             title="Collapse to strip"
-            className="rounded px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-zinc-400 ui-chip-surface transition hover:bg-zinc-800/80 hover:text-zinc-100"
+            className="rounded px-2 py-1 text-[0.625rem] uppercase tracking-[0.08em] text-zinc-400 ui-chip-surface transition hover:bg-zinc-800/80 hover:text-zinc-100"
           >
             Hide
           </button>
@@ -306,7 +306,7 @@ function PanelHeader({
       <AssistantProviderSwitch />
       <span
         role="status"
-        className={`inline-flex h-6 shrink-0 items-center gap-1.5 rounded-sm border px-1.5 font-mono text-[10px] uppercase tracking-[0.08em] ${
+        className={`inline-flex h-6 shrink-0 items-center gap-1.5 rounded-sm border px-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] ${
           agentState === 'running'
             ? 'border-amber-500/45 bg-amber-500/10 text-amber-200'
             : 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
@@ -335,7 +335,7 @@ function PanelHeader({
           type="button"
           onClick={onNewChat}
           title="Start a new chat (clears the current conversation)"
-          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-sm border ui-chip-surface px-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100"
+          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-sm border ui-chip-surface px-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100"
         >
           <Plus size={11} aria-hidden />
           new
@@ -422,7 +422,7 @@ function MessageStream({ messages, status }: { messages: UIMessage[]; status: Re
         <button
           type="button"
           onClick={scrollToBottom}
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-sm border ui-chip-surface px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-zinc-400 shadow-lg backdrop-blur transition hover:text-zinc-100"
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-sm border ui-chip-surface px-3 py-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-zinc-400 shadow-lg backdrop-blur transition hover:text-zinc-100"
         >
           latest
         </button>
@@ -440,14 +440,14 @@ function EmptyState() {
             <Bot size={16} strokeWidth={1.75} />
           </span>
           <div className="relative min-w-0 flex-1 border-l border-zinc-800 pl-4">
-            <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-cyan-300">
+            <p className="mb-1 flex items-center gap-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-cyan-300">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
               standby
             </p>
-            <p className="max-w-prose text-[13px] leading-[1.6] text-zinc-300">
+            <p className="max-w-prose text-[0.8125rem] leading-[1.6] text-zinc-300">
               Ask about devices, screenshot a phone, drive a UI flow, or run a shell command.
             </p>
-            <p className="mt-2 max-w-prose text-[11px] leading-[1.6] text-zinc-500">
+            <p className="mt-2 max-w-prose text-[0.6875rem] leading-[1.6] text-zinc-500">
               Try: <span className="text-zinc-300">"list my devices"</span> ·{' '}
               <span className="text-zinc-300">"screenshot the first online phone"</span> ·{' '}
               <span className="text-zinc-300">"open settings on 100.64.0.5:5555"</span>
@@ -464,8 +464,8 @@ function UserTurn({ message }: { message: UIMessage }) {
   return (
     <div className="flex justify-end pl-8" aria-label="Your message">
       <div className="max-w-[88%]">
-        <p className="mb-1 text-right font-mono text-[10px] uppercase tracking-[0.08em] text-zinc-500">you</p>
-        <p className="whitespace-pre-wrap break-words rounded-md border border-zinc-700/70 ui-popover-surface px-3 py-2 text-left text-[13.5px] leading-[1.55] text-zinc-100 [overflow-wrap:anywhere]">
+        <p className="mb-1 text-right font-mono text-[0.625rem] uppercase tracking-[0.08em] text-zinc-500">you</p>
+        <p className="whitespace-pre-wrap break-words rounded-md border border-zinc-700/70 ui-popover-surface px-3 py-2 text-left text-[0.84375rem] leading-[1.55] text-zinc-100 [overflow-wrap:anywhere]">
           {renderUserText(text)}
         </p>
       </div>
@@ -487,7 +487,7 @@ function renderUserText(text: string): React.ReactNode {
     part.startsWith('@') ? (
       <span
         key={i}
-        className="inline rounded-sm border border-cyan-500/30 bg-cyan-500/10 px-1 font-mono text-[12.5px] text-cyan-200"
+        className="inline rounded-sm border border-cyan-500/30 bg-cyan-500/10 px-1 font-mono text-[0.78125rem] text-cyan-200"
       >
         {part}
       </span>
@@ -509,7 +509,7 @@ function PendingTurn() {
         <span className="assistant-loading-dot relative z-10 h-2 w-2 rounded-full motion-safe:animate-pulse" />
       </div>
       <div className="min-w-0 rounded-md border border-zinc-800/70 ui-popover-surface px-3 py-2.5">
-        <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-cyan-300">
+        <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-cyan-300">
           <span>assistant</span>
           <span className="text-zinc-500 normal-case tracking-normal">· thinking</span>
         </p>
@@ -537,7 +537,7 @@ function AssistantTurn({ message, streaming }: { message: UIMessage; streaming: 
       </div>
 
       <div className="min-w-0 rounded-md border border-zinc-800/70 ui-popover-surface px-3 py-2.5">
-        <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-cyan-300">
+        <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-cyan-300">
           <span>assistant</span>
           {toolParts.length > 0 && (
             <span className="rounded-sm bg-cyan-500/10 px-1.5 py-0.5 text-zinc-400">
@@ -584,7 +584,7 @@ function PartView({ part }: { part: Part }) {
   }
   if (part.type === 'reasoning') {
     return (
-      <details className="rounded-sm ui-popover-surface text-[11px] text-zinc-500">
+      <details className="rounded-sm ui-popover-surface text-[0.6875rem] text-zinc-500">
         <summary className="cursor-pointer select-none px-2 py-1 font-mono uppercase tracking-[0.08em]">reasoning</summary>
         <p className="whitespace-pre-wrap break-words border-t border-zinc-800/60 px-2 py-1.5 leading-[1.6] text-zinc-400">
           {part.text}
@@ -610,19 +610,19 @@ function ToolRow({ part }: { part: ToolPart }) {
 
   return (
     <details className="group rounded-sm ui-popover-surface hover:bg-zinc-900/60 [&>summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer select-none items-center gap-2 px-2 py-1 font-mono text-[12px] leading-normal">
+      <summary className="flex cursor-pointer select-none items-center gap-2 px-2 py-1 font-mono text-[0.75rem] leading-normal">
         <span
           aria-hidden
           className={`h-1.5 w-1.5 shrink-0 rounded-full opacity-80 transition-opacity duration-[120ms] group-hover:opacity-100 ${dotTone}`}
         />
         <span className="shrink-0 text-zinc-200">{name}</span>
         {summary && <span className="min-w-0 flex-1 truncate text-zinc-500">{summary}</span>}
-        <span className="ml-auto flex shrink-0 items-center gap-2 text-[10px] text-zinc-500">
+        <span className="ml-auto flex shrink-0 items-center gap-2 text-[0.625rem] text-zinc-500">
           <span>{statusText}</span>
           <span aria-hidden className="transition-transform group-open:rotate-90">▸</span>
         </span>
       </summary>
-      <div className="space-y-2 border-t border-zinc-800/60 px-2 py-2 text-[11.5px]">
+      <div className="space-y-2 border-t border-zinc-800/60 px-2 py-2 text-[0.71875rem]">
         {part.input != null && <Block label="input" body={safeStringify(part.input)} />}
         {part.output != null && <Block label="output" body={safeStringify(part.output)} />}
         {part.errorText && (
@@ -638,8 +638,8 @@ function ToolRow({ part }: { part: ToolPart }) {
 function Block({ label, body }: { label: string; body: string }) {
   return (
     <div>
-      <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">{label}</p>
-      <pre className="overflow-x-auto rounded-sm ui-popover-surface px-2 py-1.5 font-mono text-[11px] leading-normal text-zinc-300 whitespace-pre-wrap break-words">
+      <p className="mb-1 font-mono text-[0.5625rem] uppercase tracking-[0.08em] text-zinc-500">{label}</p>
+      <pre className="overflow-x-auto rounded-sm ui-popover-surface px-2 py-1.5 font-mono text-[0.6875rem] leading-normal text-zinc-300 whitespace-pre-wrap break-words">
         {body}
       </pre>
     </div>
@@ -766,7 +766,7 @@ function Composer({
           aria-label="Message assistant"
           placeholder="Ask the assistant…  /  for commands, @  to mention a device"
           disabled={busy}
-          className="block w-full resize-none bg-transparent px-3 py-2.5 text-[13.5px] leading-[1.55] text-zinc-100 placeholder:text-zinc-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="block w-full resize-none bg-transparent px-3 py-2.5 text-[0.84375rem] leading-[1.55] text-zinc-100 placeholder:text-zinc-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           style={{ minHeight: `${COMPOSER_MIN_PX}px`, maxHeight: `${COMPOSER_MAX_PX}px` }}
         />
         <div className="flex items-center gap-2 border-t border-zinc-800 px-2 py-1.5">
@@ -775,7 +775,7 @@ function Composer({
             onClick={onOpenSlash}
             aria-label="Slash commands"
             title="Slash commands (/)"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-sm border ui-chip-surface font-mono text-[14px] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-sm border ui-chip-surface font-mono text-[0.875rem] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100"
           >
             /
           </button>
@@ -799,7 +799,7 @@ function Composer({
           >
             <Paperclip size={14} />
           </button>
-          <span className="font-mono text-[10px] text-zinc-500" aria-live="polite">
+          <span className="font-mono text-[0.625rem] text-zinc-500" aria-live="polite">
             {busy ? (
               <span className="inline-flex items-center gap-1.5">
               <span className="assistant-loading-dot inline-block h-2 w-2 rounded-full animate-pulse" />
@@ -813,7 +813,7 @@ function Composer({
             <button
               type="button"
               onClick={onStop}
-              className="ml-auto inline-flex h-7 items-center gap-1 rounded-sm border ui-chip-surface px-2 font-mono text-[11px] uppercase tracking-[0.06em] text-zinc-300 transition hover:border-rose-500/50 hover:text-rose-200"
+              className="ml-auto inline-flex h-7 items-center gap-1 rounded-sm border ui-chip-surface px-2 font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-zinc-300 transition hover:border-rose-500/50 hover:text-rose-200"
             >
               <SquareIcon size={11} className="fill-current" />
               stop
@@ -822,7 +822,7 @@ function Composer({
             <button
               type="submit"
               disabled={!canSend}
-              className="ml-auto inline-flex h-7 items-center gap-1 rounded-sm border border-cyan-500/50 bg-cyan-500/15 px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+              className="ml-auto inline-flex h-7 items-center gap-1 rounded-sm border border-cyan-500/50 bg-cyan-500/15 px-3 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Send size={13} />
               send

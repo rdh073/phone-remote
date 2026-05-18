@@ -28,7 +28,7 @@ export function Login() {
           </div>
           <div>
             <p className="text-lg font-semibold">phone-remote</p>
-            <p className="text-[11px] text-zinc-500">operator command center</p>
+            <p className="text-[0.6875rem] text-zinc-500">operator command center</p>
           </div>
         </div>
         <p className="text-sm text-zinc-400">Sign in to access streams, controls, and provisioning.</p>

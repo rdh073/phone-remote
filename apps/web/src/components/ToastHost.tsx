@@ -82,9 +82,9 @@ function ToastCard({ toast }: { toast: Toast }) {
       <div className="flex items-start gap-2.5 pl-3 pr-2 py-2.5">
         <Icon size={14} className={`mt-0.5 shrink-0 ${tone.icon}`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-[12.5px] leading-tight font-medium ${tone.title}`}>{toast.title}</p>
+          <p className={`text-[0.78125rem] leading-tight font-medium ${tone.title}`}>{toast.title}</p>
           {toast.description && (
-            <div className="mt-0.5 text-[11px] leading-relaxed text-zinc-400 break-words">
+            <div className="mt-0.5 text-[0.6875rem] leading-relaxed text-zinc-400 break-words">
               {toast.description}
             </div>
           )}
@@ -95,7 +95,7 @@ function ToastCard({ toast }: { toast: Toast }) {
                 toast.action!.onClick();
                 close();
               }}
-              className={`mt-1.5 inline-flex h-6 items-center rounded border px-2 text-[10.5px] font-mono uppercase tracking-[0.08em] ${tone.action} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60`}
+              className={`mt-1.5 inline-flex h-6 items-center rounded border px-2 text-[0.65625rem] font-mono uppercase tracking-[0.08em] ${tone.action} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60`}
             >
               {toast.action.label}
             </button>
@@ -114,7 +114,7 @@ function ToastCard({ toast }: { toast: Toast }) {
                   aria-valuemax={toast.progress.total}
                 />
               </div>
-              <div className="mt-1 flex items-baseline justify-between font-mono text-[10px] tabular-nums text-zinc-500">
+              <div className="mt-1 flex items-baseline justify-between font-mono text-[0.625rem] tabular-nums text-zinc-500">
                 <span>{toast.progress.current} / {toast.progress.total}</span>
                 <span>{Math.round((toast.progress.current / Math.max(1, toast.progress.total)) * 100)}%</span>
               </div>

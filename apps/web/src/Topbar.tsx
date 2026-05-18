@@ -72,7 +72,7 @@ export function Topbar() {
             </div>
             <div>
               <h1 className="text-sm font-semibold tracking-tight">phone-remote</h1>
-              <p className="text-[11px] text-zinc-400">operator command center</p>
+              <p className="text-[0.6875rem] text-zinc-400">operator command center</p>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ export function Topbar() {
           >
             <Activity size={15} />
             {unread > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] inline-flex items-center justify-center rounded-full bg-cyan-400 text-zinc-950 text-[9px] font-mono font-semibold tabular-nums px-1">
+              <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] inline-flex items-center justify-center rounded-full bg-cyan-400 text-zinc-950 text-[0.5625rem] font-mono font-semibold tabular-nums px-1">
                 {unread > 99 ? '99+' : unread}
               </span>
             )}

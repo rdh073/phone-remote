@@ -66,7 +66,7 @@ export function FilterPresetsMenu() {
     const name = await promptDialog({
       title: 'Save filter preset',
       body: (
-        <span className="font-mono text-[11px] text-zinc-400">
+        <span className="font-mono text-[0.6875rem] text-zinc-400">
           {summarize(current)}
         </span>
       ),
@@ -119,12 +119,12 @@ export function FilterPresetsMenu() {
           }}
           className="absolute left-0 top-full z-40 mt-1.5 w-[260px] origin-top-left rounded-md border border-zinc-700/80 ui-popover-surface backdrop-blur-md p-1"
         >
-          <div className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500 border-b border-zinc-800/60">
+          <div className="px-2 py-1 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500 border-b border-zinc-800/60">
             saved filters
           </div>
           <div className="max-h-[40vh] overflow-y-auto py-0.5">
             {presets.length === 0 ? (
-              <p className="px-3 py-2 text-[11px] text-zinc-500 italic">No saved presets yet.</p>
+              <p className="px-3 py-2 text-[0.6875rem] text-zinc-500 italic">No saved presets yet.</p>
             ) : (
               presets.map((p) => (
                 <div
@@ -136,8 +136,8 @@ export function FilterPresetsMenu() {
                     onClick={() => apply(p.filters)}
                     className="flex-1 min-w-0 text-left focus:outline-none"
                   >
-                    <span className="block text-[12px] text-zinc-100 truncate">{p.name}</span>
-                    <span className="block font-mono text-[10px] text-zinc-500 truncate">
+                    <span className="block text-[0.75rem] text-zinc-100 truncate">{p.name}</span>
+                    <span className="block font-mono text-[0.625rem] text-zinc-500 truncate">
                       {summarize(p.filters)}
                     </span>
                   </button>
@@ -159,12 +159,12 @@ export function FilterPresetsMenu() {
               type="button"
               onClick={onSave}
               disabled={!dirty}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[12px] text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300 focus:outline-none focus-visible:bg-cyan-500/10 focus-visible:text-cyan-100"
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[0.75rem] text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300 focus:outline-none focus-visible:bg-cyan-500/10 focus-visible:text-cyan-100"
             >
               <BookmarkPlus size={13} className="text-zinc-500" />
               <span>Save current filter…</span>
               {dirty && (
-                <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-300">
+                <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-[0.12em] text-cyan-300">
                   ready
                 </span>
               )}
@@ -184,11 +184,11 @@ export function FilterPresetsMenu() {
                   });
                 }
               }}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[12px] text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-100 focus:outline-none focus-visible:bg-cyan-500/10 focus-visible:text-cyan-100"
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[0.75rem] text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-100 focus:outline-none focus-visible:bg-cyan-500/10 focus-visible:text-cyan-100"
             >
               <Link2 size={13} className="text-zinc-500" />
               <span>Copy share URL</span>
-              <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+              <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-[0.12em] text-zinc-500">
                 bookmarkable
               </span>
             </button>

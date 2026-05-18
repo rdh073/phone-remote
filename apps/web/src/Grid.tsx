@@ -268,7 +268,7 @@ function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: numb
         aria-valuemax={MAX}
         aria-valuenow={value}
         aria-valuetext={`${value} columns`}
-        className="h-1 w-32 accent-cyan-500 cursor-pointer"
+        className="w-32 accent-cyan-500 cursor-pointer touch-target-range"
       />
       <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
     </div>
@@ -373,7 +373,7 @@ function ActionBar({ selectedSerials }: { selectedSerials: Set<string> }) {
       await alertDialog({
         title: `Shell output (${serials.length} device${serials.length === 1 ? '' : 's'})`,
         body: (
-          <pre className="font-mono text-[11px] leading-relaxed text-zinc-200 whitespace-pre-wrap break-words">
+          <pre className="font-mono text-[0.6875rem] leading-relaxed text-zinc-200 whitespace-pre-wrap break-words">
             {summary || 'no output'}
           </pre>
         ),
@@ -446,7 +446,7 @@ function ActionBar({ selectedSerials }: { selectedSerials: Set<string> }) {
             {textRecall.position && (
               <span
                 aria-hidden="true"
-                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
+                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
                 title="Esc to return to your draft"
               >
                 {textRecall.position.current}/{textRecall.position.total}
@@ -477,7 +477,7 @@ function ActionBar({ selectedSerials }: { selectedSerials: Set<string> }) {
             {shellRecall.position && (
               <span
                 aria-hidden="true"
-                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
+                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
                 title="Esc to return to your draft"
               >
                 {shellRecall.position.current}/{shellRecall.position.total}

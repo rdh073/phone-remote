@@ -110,7 +110,7 @@ export function ShortcutsOverlay() {
             <h2 id="shortcuts-title" className="text-sm font-semibold text-zinc-100">
               Keyboard shortcuts
             </h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">
               press ? to toggle
             </span>
           </div>
@@ -126,7 +126,7 @@ export function ShortcutsOverlay() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 max-h-[70vh] overflow-y-auto">
           {GROUPS.map((group) => (
             <section key={group.title} className="space-y-1.5">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+              <h3 className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">
                 {group.title}
               </h3>
               <dl className="space-y-1">
@@ -135,20 +135,20 @@ export function ShortcutsOverlay() {
                     <dt className="flex items-center gap-1">
                       {chord.keys.map((k, i) =>
                         k === '·' ? (
-                          <span key={i} className="text-zinc-600 text-[10px] mx-0.5">
+                          <span key={i} className="text-zinc-600 text-[0.625rem] mx-0.5">
                             +
                           </span>
                         ) : (
                           <kbd
                             key={i}
-                            className="inline-flex min-w-[1.4rem] h-5 items-center justify-center rounded ui-chip-surface px-1.5 font-mono text-[10px] text-zinc-200 tabular-nums"
+                            className="inline-flex min-w-[1.4rem] h-5 items-center justify-center rounded ui-chip-surface px-1.5 font-mono text-[0.625rem] text-zinc-200 tabular-nums"
                           >
                             {k}
                           </kbd>
                         ),
                       )}
                     </dt>
-                    <dd className="text-[12px] text-zinc-400 text-right leading-tight">
+                    <dd className="text-[0.75rem] text-zinc-400 text-right leading-tight">
                       {chord.label}
                     </dd>
                   </div>

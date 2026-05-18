@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm';
  */
 const COMPONENTS: Components = {
   p: ({ children }) => (
-    <p className="whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] text-zinc-200 [overflow-wrap:anywhere]">
+    <p className="whitespace-pre-wrap break-words text-[0.84375rem] leading-[1.65] text-zinc-200 [overflow-wrap:anywhere]">
       {children}
     </p>
   ),
@@ -28,60 +28,60 @@ const COMPONENTS: Components = {
   code: ({ inline, children, className }: CodeProps) => {
     if (inline) {
       return (
-        <code className="rounded-sm bg-zinc-900 ui-chip-surface px-1 py-0.5 font-mono text-[12px] text-cyan-200">
+        <code className="rounded-sm bg-zinc-900 ui-chip-surface px-1 py-0.5 font-mono text-[0.75rem] text-cyan-200">
           {children}
         </code>
       );
     }
     const lang = /language-(\w+)/.exec(className ?? '')?.[1];
     return (
-      <code className={`block whitespace-pre-wrap break-words font-mono text-[11.5px] leading-normal text-zinc-200 ${lang ? `language-${lang}` : ''}`}>
+      <code className={`block whitespace-pre-wrap break-words font-mono text-[0.71875rem] leading-normal text-zinc-200 ${lang ? `language-${lang}` : ''}`}>
         {children}
       </code>
     );
   },
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-sm border border-zinc-800/70 bg-zinc-950 ui-popover-surface px-2.5 py-2 font-mono text-[11.5px] leading-normal text-zinc-200">
+    <pre className="overflow-x-auto rounded-sm border border-zinc-800/70 bg-zinc-950 ui-popover-surface px-2.5 py-2 font-mono text-[0.71875rem] leading-normal text-zinc-200">
       {children}
     </pre>
   ),
   ul: ({ children }) => (
-    <ul className="list-disc space-y-0.5 pl-5 text-[13.5px] leading-[1.65] text-zinc-200 marker:text-zinc-500">
+    <ul className="list-disc space-y-0.5 pl-5 text-[0.84375rem] leading-[1.65] text-zinc-200 marker:text-zinc-500">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal space-y-0.5 pl-5 text-[13.5px] leading-[1.65] text-zinc-200 marker:text-zinc-500">
+    <ol className="list-decimal space-y-0.5 pl-5 text-[0.84375rem] leading-[1.65] text-zinc-200 marker:text-zinc-500">
       {children}
     </ol>
   ),
   li: ({ children }) => <li className="[overflow-wrap:anywhere]">{children}</li>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-cyan-500/40 pl-3 text-[13px] italic text-zinc-300">
+    <blockquote className="border-l-2 border-cyan-500/40 pl-3 text-[0.8125rem] italic text-zinc-300">
       {children}
     </blockquote>
   ),
   hr: () => <hr className="my-3 border-zinc-800" />,
   h1: ({ children }) => (
-    <h1 className="text-[15px] font-semibold text-zinc-100">{children}</h1>
+    <h1 className="text-[0.9375rem] font-semibold text-zinc-100">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-[14px] font-semibold text-zinc-100">{children}</h2>
+    <h2 className="text-[0.875rem] font-semibold text-zinc-100">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-[13px] font-semibold text-zinc-100">{children}</h3>
+    <h3 className="text-[0.8125rem] font-semibold text-zinc-100">{children}</h3>
   ),
   h4: ({ children }) => (
-    <h4 className="text-[12.5px] font-semibold text-zinc-100">{children}</h4>
+    <h4 className="text-[0.78125rem] font-semibold text-zinc-100">{children}</h4>
   ),
   table: ({ children }) => (
     <div className="overflow-x-auto">
-      <table className="my-1 border-collapse text-[12px] text-zinc-200">{children}</table>
+      <table className="my-1 border-collapse text-[0.75rem] text-zinc-200">{children}</table>
     </div>
   ),
   thead: ({ children }) => <thead className="border-b border-zinc-700">{children}</thead>,
   th: ({ children }) => (
-    <th className="px-2 py-1 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-zinc-400">
+    <th className="px-2 py-1 text-left font-mono text-[0.625rem] uppercase tracking-[0.06em] text-zinc-400">
       {children}
     </th>
   ),

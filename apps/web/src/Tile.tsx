@@ -300,7 +300,7 @@ export function Tile({ serial, res, className, fill = false }: Props) {
         {(fill || showStatsInGrid) && <StatsBadge stats={stats} meta={meta} compact={!fill} />}
 
         <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
-        <div className="absolute top-1.5 left-1.5 right-1.5 text-[10px] text-zinc-200 font-medium pointer-events-none flex justify-between">
+        <div className="absolute top-1.5 left-1.5 right-1.5 text-[0.625rem] text-zinc-200 font-medium pointer-events-none flex justify-between">
           <span className="truncate" title={displayName}>{displayName}</span>
           {location ? (
             <span className="truncate text-zinc-500 max-w-[45%] text-right" title={location}>
@@ -321,12 +321,12 @@ export function Tile({ serial, res, className, fill = false }: Props) {
         className="flex items-center gap-1.5 px-2 py-1.5 border-t border-zinc-800 bg-zinc-900 ui-chip-surface hover:bg-zinc-800 transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-inset"
       >
         <span className={`shrink-0 w-1.5 h-1.5 rounded-full ${statusDotClass(status)}`} aria-label={status} />
-        <span className="text-[10px] uppercase tracking-wide text-zinc-500">{status}</span>
-        <span className="text-[10px] truncate flex-1 text-left text-zinc-200">{displayName}</span>
-        <span className="text-[10px] font-mono text-zinc-500 truncate">
+        <span className="text-[0.625rem] uppercase tracking-wide text-zinc-500">{status}</span>
+        <span className="text-[0.625rem] truncate flex-1 text-left text-zinc-200">{displayName}</span>
+        <span className="text-[0.625rem] font-mono text-zinc-500 truncate">
           {serial.replace(/^\d+\.\d+\.\d+\./, '').replace(/:5555$/, '')}
         </span>
-        <span className="text-[10px] uppercase tracking-wide text-cyan-300 inline-flex items-center gap-1">
+        <span className="text-[0.625rem] uppercase tracking-wide text-cyan-300 inline-flex items-center gap-1">
           Open
           <ExpandIcon size={11} />
         </span>
@@ -363,7 +363,7 @@ function StatusBadge({ kind }: { kind: StatusKind }) {
   const dot = kind === 'unauthorized' ? 'bg-amber-400' : 'bg-zinc-500';
   return (
     <span
-      className={`absolute top-1.5 left-1.5 inline-flex h-5 items-center gap-1 rounded-sm border px-1.5 font-mono text-[9px] uppercase tracking-[0.12em] backdrop-blur-sm ${tone}`}
+      className={`absolute top-1.5 left-1.5 inline-flex h-5 items-center gap-1 rounded-sm border px-1.5 font-mono text-[0.5625rem] uppercase tracking-[0.12em] backdrop-blur-sm ${tone}`}
     >
       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       {label}
@@ -381,7 +381,7 @@ function EmptyTileGlyph({ status }: { status: StatusKind }) {
   return (
     <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-2 text-zinc-700 pointer-events-none">
       <Smartphone size={32} strokeWidth={1.25} />
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+      <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">
         {caption}
       </span>
     </div>
@@ -392,7 +392,7 @@ function LockedBadge({ flash }: { flash: boolean }) {
   return (
     <>
       <span
-        className={`absolute bottom-1.5 left-1.5 z-10 inline-flex h-4 items-center gap-1 rounded px-1.5 border font-mono text-[9px] uppercase tracking-[0.18em] backdrop-blur-sm transition-colors duration-[140ms] ${
+        className={`absolute bottom-1.5 left-1.5 z-10 inline-flex h-4 items-center gap-1 rounded px-1.5 border font-mono text-[0.5625rem] uppercase tracking-[0.18em] backdrop-blur-sm transition-colors duration-[140ms] ${
           flash
             ? 'border-rose-400/80 bg-rose-500/30 text-rose-50'
             : 'border-amber-400/55 bg-amber-500/15 text-amber-200'
@@ -422,7 +422,7 @@ function SelectedBadge({ sync }: { sync: boolean }) {
   const color = sync ? 'bg-emerald-500 text-zinc-950' : 'bg-zinc-700 ui-chip-surface text-zinc-100';
   return (
     <span
-      className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-semibold ${color}`}
+      className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-[0.625rem] font-semibold ${color}`}
       aria-label={sync ? 'selected, sync on' : 'selected'}
     >
       <Check size={11} strokeWidth={3} />
@@ -617,7 +617,7 @@ function StatsBadge({
   const codec = meta ? codecLabel(meta.codec) : '—';
   const dim = meta ? `${meta.width}×${meta.height}` : '—';
   const sparkWidth = compact ? 22 : 36;
-  const padClass = compact ? 'px-1.5 py-0.5 gap-1 text-[9px]' : 'px-2 py-1 gap-2 text-[10px]';
+  const padClass = compact ? 'px-1.5 py-0.5 gap-1 text-[0.5625rem]' : 'px-2 py-1 gap-2 text-[0.625rem]';
   return (
     <div
       className={`absolute bottom-1 right-1 z-10 inline-flex items-center rounded border border-zinc-700/70 bg-zinc-950/85 ui-popover-surface backdrop-blur-sm font-mono tabular-nums text-zinc-300 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.5)] ${padClass}`}
@@ -741,7 +741,7 @@ function HealthPulse({ health, selected, serial }: { health: StreamHealth; selec
       ) : (
         <RotateCw size={9} className="text-zinc-200/95 transition-transform group-hover/health:rotate-180 duration-300" aria-hidden />
       )}
-      <span className="font-mono text-[8px] uppercase tracking-[0.16em] leading-none">{label}</span>
+      <span className="font-mono text-[0.5rem] uppercase tracking-[0.16em] leading-none">{label}</span>
     </>
   );
 

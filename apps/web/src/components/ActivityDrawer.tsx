@@ -126,7 +126,7 @@ export function ActivityDrawer() {
         <header className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-zinc-800/70">
           <div className="flex items-baseline gap-2">
             <h2 className="text-sm font-semibold text-zinc-100">Activity</h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">
               last {Math.min(events.length, 100)}
             </span>
           </div>
@@ -135,7 +135,7 @@ export function ActivityDrawer() {
               <button
                 type="button"
                 onClick={() => exportCsv(filtered)}
-                className="h-7 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 text-[11px] text-zinc-400 hover:text-cyan-200 hover:border-cyan-500/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
+                className="h-7 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 text-[0.6875rem] text-zinc-400 hover:text-cyan-200 hover:border-cyan-500/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
                 title="Export as CSV"
               >
                 <Download size={11} />
@@ -146,7 +146,7 @@ export function ActivityDrawer() {
               <button
                 type="button"
                 onClick={clear}
-                className="h-7 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 text-[11px] text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
+                className="h-7 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 text-[0.6875rem] text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
                 title="Clear all"
               >
                 <Eraser size={11} />
@@ -180,7 +180,7 @@ export function ActivityDrawer() {
                 }}
                 placeholder="Filter target, detail, kind…"
                 aria-label="Search activity"
-              className="h-7 w-full bg-zinc-900 ui-popover-surface border border-zinc-800 rounded pl-7 pr-2 text-[11px] font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/45 focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+              className="h-7 w-full bg-zinc-900 ui-popover-surface border border-zinc-800 rounded pl-7 pr-2 text-[0.6875rem] font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/45 focus-visible:ring-2 focus-visible:ring-cyan-500/40"
               />
             </label>
             <div className="flex flex-wrap gap-1">
@@ -192,7 +192,7 @@ export function ActivityDrawer() {
                     type="button"
                     onClick={() => toggle(kindFilter, k, setKindFilter)}
                     aria-pressed={active}
-                    className={`h-6 inline-flex items-center gap-1 rounded border px-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors duration-[100ms] ${
+                    className={`h-6 inline-flex items-center gap-1 rounded border px-1.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] transition-colors duration-[100ms] ${
                       active
                     ? 'border-cyan-500/45 bg-cyan-500/10 text-cyan-100'
                     : 'border-zinc-800 bg-zinc-900 ui-chip-surface text-zinc-500 hover:text-zinc-300'
@@ -213,7 +213,7 @@ export function ActivityDrawer() {
                     type="button"
                     onClick={() => toggle(outcomeFilter, o, setOutcomeFilter)}
                     aria-pressed={active}
-                    className={`h-6 inline-flex items-center gap-1.5 rounded border px-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors duration-[100ms] ${
+                    className={`h-6 inline-flex items-center gap-1.5 rounded border px-1.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] transition-colors duration-[100ms] ${
                     active
                         ? 'border-zinc-700 bg-zinc-900 ui-chip-surface text-zinc-100'
                         : 'border-zinc-800 bg-zinc-900 ui-chip-surface text-zinc-500 hover:text-zinc-300'
@@ -233,7 +233,7 @@ export function ActivityDrawer() {
                     setQuery('');
                     setTargetFilter(null);
                   }}
-                  className="h-6 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-zinc-500 hover:text-rose-200 hover:border-rose-500/40"
+                  className="h-6 inline-flex items-center gap-1 rounded border border-zinc-800 bg-zinc-900 ui-chip-surface px-1.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] text-zinc-500 hover:text-rose-200 hover:border-rose-500/40"
                   title="Clear filters"
                 >
                   reset
@@ -242,12 +242,12 @@ export function ActivityDrawer() {
             </div>
             {targetFilter && (
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">target</span>
+                <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-zinc-500">target</span>
                 <button
                   type="button"
                   onClick={() => setTargetFilter(null)}
                   title="Click to clear target filter"
-                  className="group inline-flex max-w-full items-center gap-1 rounded border border-cyan-500/45 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10px] text-cyan-100 hover:border-rose-500/45 hover:bg-rose-500/10 hover:text-rose-100"
+                  className="group inline-flex max-w-full items-center gap-1 rounded border border-cyan-500/45 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[0.625rem] text-cyan-100 hover:border-rose-500/45 hover:bg-rose-500/10 hover:text-rose-100"
                 >
                   <span className="truncate max-w-[200px]">{targetFilter}</span>
                   <X size={10} className="opacity-60 group-hover:opacity-100" />
@@ -261,16 +261,16 @@ export function ActivityDrawer() {
             <div className="h-full flex items-center justify-center text-center px-6">
               <div>
                 <p className="text-xs text-zinc-400">No activity yet.</p>
-                <p className="mt-1 text-[11px] text-zinc-600">
+                <p className="mt-1 text-[0.6875rem] text-zinc-600">
                   Actions like reboot, disconnect, and scene changes land here.
                 </p>
               </div>
             </div>
           ) : filtered.length === 0 ? (
             <div className="h-full flex items-center justify-center text-center px-6">
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-[0.6875rem] text-zinc-500">
                 No events match the current filters.
-                {query && <span className="block mt-1 font-mono text-[10px] text-zinc-600">query: "{query}"</span>}
+                {query && <span className="block mt-1 font-mono text-[0.625rem] text-zinc-600">query: "{query}"</span>}
               </p>
             </div>
           ) : (
@@ -329,7 +329,7 @@ function Row({
         <Icon size={13} />
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-zinc-200 leading-tight flex items-baseline flex-wrap gap-x-1">
+        <p className="text-[0.75rem] text-zinc-200 leading-tight flex items-baseline flex-wrap gap-x-1">
           <span className="font-medium">{kindLabel(event.kind)}</span>
           {event.target && (
             <>
@@ -350,12 +350,12 @@ function Row({
           )}
         </p>
         {event.detail && (
-          <p className="mt-0.5 text-[11px] text-zinc-500 leading-snug break-words">{event.detail}</p>
+          <p className="mt-0.5 text-[0.6875rem] text-zinc-500 leading-snug break-words">{event.detail}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-0.5 shrink-0">
         <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-label={event.outcome} />
-        <span className="font-mono text-[10px] text-zinc-600 tabular-nums">{label}</span>
+        <span className="font-mono text-[0.625rem] text-zinc-600 tabular-nums">{label}</span>
       </div>
     </div>
   );

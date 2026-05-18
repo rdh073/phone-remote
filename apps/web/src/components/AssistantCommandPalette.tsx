@@ -90,7 +90,7 @@ export function AssistantCommandPalette({ open, onClose, onPick, initialQuery = 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-zinc-800 px-3 py-2">
-          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+          <p className="mb-2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-zinc-500">
             Slash commands
           </p>
           <input
@@ -126,12 +126,12 @@ export function AssistantCommandPalette({ open, onClose, onPick, initialQuery = 
                 <span className="flex items-center gap-2">
                   <span className="font-mono text-zinc-300">{c.command}</span>
                   {c.local && (
-                    <span className="rounded-sm border border-zinc-700 px-1 font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">
+                    <span className="rounded-sm border border-zinc-700 px-1 font-mono text-[0.5625rem] uppercase tracking-[0.08em] text-zinc-500">
                       local
                     </span>
                   )}
                 </span>
-                <span className="ml-3 truncate text-[11px] text-zinc-500">{c.description}</span>
+                <span className="ml-3 truncate text-[0.6875rem] text-zinc-500">{c.description}</span>
               </button>
             </li>
           ))}

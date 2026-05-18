@@ -119,7 +119,7 @@ export function SettingsModal() {
         <header className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/70">
           <div className="flex items-baseline gap-2">
             <h2 className="text-sm font-semibold text-zinc-100">Settings</h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500">
               {activeCategory.label}
             </span>
           </div>
@@ -158,12 +158,12 @@ export function SettingsModal() {
 
         <footer className="flex items-center justify-between gap-3 px-5 py-3 border-t border-zinc-800/70">
           {active === 'client' ? (
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+            <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-zinc-600">
               changes save automatically · stored in browser
             </p>
           ) : (
             <>
-              <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+              <div className="flex items-center gap-2 text-[0.6875rem] text-zinc-500">
                 {dirtyKeys.length === 0 ? (
                   <span>no unsaved changes</span>
                 ) : (
@@ -173,7 +173,7 @@ export function SettingsModal() {
                   </span>
                 )}
                 {saveErr && (
-                  <span className="inline-flex items-center gap-1 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] text-rose-300">
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[0.625rem] text-rose-300">
                     <AlertTriangle size={10} />
                     {saveErr}
                   </span>
@@ -184,7 +184,7 @@ export function SettingsModal() {
                   type="button"
                   onClick={discardServerDraft}
                   disabled={dirtyKeys.length === 0 || saving}
-                  className="inline-flex h-7 items-center gap-1 rounded-sm border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 font-mono text-[11px] uppercase tracking-[0.06em] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-7 items-center gap-1 rounded-sm border border-zinc-800 bg-zinc-900 ui-chip-surface px-2 font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Discard
                 </button>
@@ -192,7 +192,7 @@ export function SettingsModal() {
                   type="button"
                   onClick={save}
                   disabled={dirtyKeys.length === 0 || saving}
-                  className={`inline-flex h-7 items-center gap-1 rounded-sm border border-cyan-500/50 bg-cyan-500/15 px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`inline-flex h-7 items-center gap-1 rounded-sm border border-cyan-500/50 bg-cyan-500/15 px-3 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40 ${
                     dirtyKeys.length > 0 && !saving
                       ? 'shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_18px_-4px_rgba(34,211,238,0.45)]'
                       : ''
@@ -234,7 +234,7 @@ function CategoryRail({
                 type="button"
                 onClick={() => onSelect(c.id)}
                 aria-current={on}
-                className={`relative flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-[12px] transition-colors ${
+                className={`relative flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-[0.75rem] transition-colors ${
                   on
                     ? 'bg-cyan-500/10 ui-chip-surface-active text-cyan-100'
                     : 'bg-zinc-900 ui-chip-surface text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100'
@@ -251,7 +251,7 @@ function CategoryRail({
                   <span className="truncate">{c.label}</span>
                 </span>
                 {count > 0 && (
-                  <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber-500/20 px-1 font-mono text-[9px] tabular-nums text-amber-200">
+                  <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber-500/20 px-1 font-mono text-[0.5625rem] tabular-nums text-amber-200">
                     {count}
                   </span>
                 )}
@@ -295,7 +295,7 @@ function ServerPanel({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+      <div className="flex items-center gap-2 text-[0.75rem] text-zinc-500">
         <Loader2 size={12} className="animate-spin" />
         loading hub settings…
       </div>
@@ -303,7 +303,7 @@ function ServerPanel({
   }
   if (error) {
     return (
-      <div className="rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12px] text-rose-200">
+      <div className="rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[0.75rem] text-rose-200">
         Failed to load settings: {error}
       </div>
     );
@@ -318,7 +318,7 @@ function ServerPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-zinc-500">{cat.hint}</p>
+      <p className="text-[0.6875rem] text-zinc-500">{cat.hint}</p>
       <div className="space-y-3">
         {keys.map((meta) => {
           const stored = valueByKey.get(meta.key);
@@ -363,14 +363,14 @@ function ServerField({
     <div className={`rounded-md border bg-zinc-900/40 ui-popover-surface px-3 py-2.5 transition-colors ${isDirty ? 'border-amber-500/55 shadow-[inset_2px_0_0_rgba(245,158,11,0.65)]' : 'border-zinc-800/70'}`}>
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[12px] font-medium text-zinc-200">{meta.label}</p>
-          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-zinc-500">{meta.key}</p>
+          <p className="text-[0.75rem] font-medium text-zinc-200">{meta.label}</p>
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.08em] text-zinc-500">{meta.key}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {meta.restartRequired && (
             <span
               title="Change requires hub restart to take effect"
-              className="font-mono text-[9px] uppercase tracking-[0.08em] text-amber-300/80"
+              className="font-mono text-[0.5625rem] uppercase tracking-[0.08em] text-amber-300/80"
             >
               restart-required
             </span>
@@ -387,7 +387,7 @@ function ServerField({
           )}
         </div>
       </div>
-      <p className="mb-2 text-[11px] leading-snug text-zinc-500">{meta.description}</p>
+      <p className="mb-2 text-[0.6875rem] leading-snug text-zinc-500">{meta.description}</p>
       <ServerFieldInput meta={meta} stored={stored} draft={draft} storedValue={storedValue} definedNow={definedNow} onChange={onChange} />
     </div>
   );
@@ -416,7 +416,7 @@ function ServerFieldInput({
         type="button"
         onClick={() => onChange(on ? '0' : '1')}
         aria-pressed={on}
-        className={`inline-flex h-7 items-center gap-2 rounded-md border px-2 font-mono text-[11px] transition ${
+        className={`inline-flex h-7 items-center gap-2 rounded-md border px-2 font-mono text-[0.6875rem] transition ${
           on
             ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
     : 'border-zinc-700 bg-zinc-900 ui-chip-surface text-zinc-400 hover:text-zinc-100'
@@ -442,7 +442,7 @@ function ServerFieldInput({
           const v = e.target.value;
           onChange(v === '' ? null : v);
         }}
-        className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[12px] text-zinc-100 focus:outline-none focus:border-cyan-500/60"
+        className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[0.75rem] text-zinc-100 focus:outline-none focus:border-cyan-500/60"
       >
         {/* Placeholder when neither stored nor drafted — clearing also lands here. */}
         {liveValue === '' && (
@@ -481,7 +481,7 @@ function ServerFieldInput({
           onChange(v === '' ? null : v);
         }
       }}
-      className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[12px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/60"
+      className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[0.75rem] text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/60"
     />
   );
 }
@@ -505,7 +505,7 @@ function SecretInput({
   return (
     <div className="space-y-1.5">
       {!editing && definedNow && (
-        <div className="flex items-center justify-between gap-2 rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[12px] text-zinc-400">
+        <div className="flex items-center justify-between gap-2 rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[0.75rem] text-zinc-400">
           <span>{stored?.preview ?? '••••'}</span>
           <div className="flex items-center gap-1">
             <button
@@ -538,7 +538,7 @@ function SecretInput({
           spellCheck={false}
           autoFocus={editing && currentValue === ''}
           onChange={(e) => onChange(e.target.value === '' ? '' : e.target.value)}
-          className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[12px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/60"
+          className="block w-full rounded border border-zinc-800 bg-zinc-950 ui-popover-surface px-2 py-1.5 font-mono text-[0.75rem] text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/60"
         />
       )}
     </div>
@@ -549,8 +549,8 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <section className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-[12px] font-medium text-zinc-200">{title}</h3>
-        {hint && <span className="font-mono text-[10px] text-zinc-500">{hint}</span>}
+        <h3 className="text-[0.75rem] font-medium text-zinc-200">{title}</h3>
+        {hint && <span className="font-mono text-[0.625rem] text-zinc-500">{hint}</span>}
       </div>
       {children}
     </section>
@@ -574,7 +574,7 @@ function ChipGroup<T>({
           type="button"
           onClick={() => onChange(opt.value)}
           aria-pressed={opt.value === value}
-          className={`h-7 px-2 rounded text-[11px] font-mono tabular-nums transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${
+          className={`h-7 px-2 rounded text-[0.6875rem] font-mono tabular-nums transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${
             opt.value === value
               ? 'bg-cyan-500/15 text-cyan-100'
               : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
@@ -592,7 +592,7 @@ function AutoRefreshSection() {
   const setValue = useSettingsStore((s) => s.setAutoRefreshSec);
   return (
     <Section title="Device list refresh" hint="while tab is visible">
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         How often the hub is polled for device state changes. Disabling falls back to manual refresh.
       </p>
       <ChipGroup value={value} onChange={setValue} options={AUTO_REFRESH_OPTIONS} />
@@ -605,7 +605,7 @@ function ToastDurationSection() {
   const setValue = useSettingsStore((s) => s.setToastDurationMs);
   return (
     <Section title="Toast dismiss" hint="hover always pauses">
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         How long success / info / error toasts linger before sliding away. "Sticky" requires manual dismiss.
       </p>
       <ChipGroup value={value} onChange={setValue} options={TOAST_OPTIONS} />
@@ -618,9 +618,9 @@ function SidebarDefaultSection() {
   const setValue = useSettingsStore((s) => s.setSidebarDefaultCollapsed);
   return (
     <Section title="Sidebar default" hint="on app load">
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         Whether the device sidebar starts collapsed. Toggle in-session with{' '}
-        <kbd className="inline-block px-1 rounded bg-zinc-800 ui-chip-surface border border-zinc-700 text-zinc-300 font-mono text-[10px]">
+        <kbd className="inline-block px-1 rounded bg-zinc-800 ui-chip-surface border border-zinc-700 text-zinc-300 font-mono text-[0.625rem]">
           B
         </kbd>
         .
@@ -642,7 +642,7 @@ function GridStatsSection() {
   const setValue = useSettingsStore((s) => s.setShowStatsInGrid);
   return (
     <Section title="Grid stats overlay" hint="FPS · bandwidth">
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         Show a compact FPS / bandwidth sparkline on every grid tile. Useful when monitoring a large rack for stalls or
         throttling at a glance. Detail view always shows the full overlay.
       </p>
@@ -663,7 +663,7 @@ function PauseOffscreenSection() {
   const setValue = useSettingsStore((s) => s.setPauseOffscreenStreams);
   return (
     <Section title="Pause offscreen streams" hint="bandwidth saver">
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         Tiles scrolled out of view tear down their WebSocket and video decoder, then resume when scrolled back. Big win
         on large racks but adds a ~1s reconnect each time a tile re-enters view. Detail mode is never paused.
       </p>

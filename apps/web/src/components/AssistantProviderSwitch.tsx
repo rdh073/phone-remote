@@ -40,7 +40,7 @@ export function AssistantProviderSwitch() {
         aria-expanded={open}
         disabled={!catalog}
         title="Switch assistant provider / model"
-        className="grid h-6 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-sm ui-chip-surface px-1.5 font-mono text-[10px] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+        className="grid h-6 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-sm ui-chip-surface px-1.5 font-mono text-[0.625rem] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="flex min-w-0 items-center gap-1">
           <span className="truncate normal-case text-zinc-200">
@@ -59,15 +59,15 @@ export function AssistantProviderSwitch() {
           className="absolute left-0 top-full z-50 mt-1 w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] overflow-auto rounded-md border border-zinc-700 ui-popover-surface p-1 shadow-xl"
         >
           {catalogError && (
-            <div className="mb-1 rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[10px] text-amber-200">
+            <div className="mb-1 rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[0.625rem] text-amber-200">
               Catalog unavailable: {catalogError}
             </div>
           )}
           {!catalog && (
-            <div className="px-2 py-1.5 font-mono text-[10px] text-zinc-500">loading…</div>
+            <div className="px-2 py-1.5 font-mono text-[0.625rem] text-zinc-500">loading…</div>
           )}
           {catalog && catalog.length === 0 && (
-            <div className="px-2 py-2 font-mono text-[10px] leading-[1.6] text-zinc-500">
+            <div className="px-2 py-2 font-mono text-[0.625rem] leading-[1.6] text-zinc-500">
               No providers configured. Set one of{' '}
               <span className="text-zinc-300">ANTHROPIC_API_KEY</span>,{' '}
               <span className="text-zinc-300">OPENAI_API_KEY</span>,{' '}
@@ -148,7 +148,7 @@ function ProviderRow({
       {active && (
         <div className="mb-1 ml-2 mt-0.5 border-l border-zinc-800 pl-2">
           {meta.models.length === 0 && (
-            <p className="px-2 py-1 font-mono text-[10px] text-zinc-500">
+            <p className="px-2 py-1 font-mono text-[0.625rem] text-zinc-500">
               No suggested models — type one below.
             </p>
           )}
@@ -160,7 +160,7 @@ function ProviderRow({
                     type="button"
                     role="menuitem"
                     onClick={() => onSelectModel(m)}
-                    className={`block w-full rounded px-2 py-1 text-left font-mono text-[11px] ui-chip-surface transition ${
+                    className={`block w-full rounded px-2 py-1 text-left font-mono text-[0.6875rem] ui-chip-surface transition ${
                       m === activeModel
                         ? 'bg-cyan-500/10 text-cyan-200'
                         : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100'
@@ -173,7 +173,7 @@ function ProviderRow({
             </ul>
           )}
           <div className="mt-1 flex items-center gap-1 rounded-sm border border-zinc-800 bg-zinc-950 ui-popover-surface px-1.5">
-            <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">
+            <span className="font-mono text-[0.5625rem] uppercase tracking-[0.08em] text-zinc-500">
               custom
             </span>
             <input
@@ -183,19 +183,19 @@ function ProviderRow({
               onKeyDown={onCustomKey}
               placeholder="e.g. llama3.3:70b-instruct"
               aria-label={`Custom ${meta.label} model`}
-              className="block w-full bg-transparent py-1 font-mono text-[11px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
+              className="block w-full bg-transparent py-1 font-mono text-[0.6875rem] text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
             />
             <button
               type="button"
               onClick={commitCustom}
               disabled={!custom.trim()}
-              className="rounded-sm px-1.5 py-0.5 ui-chip-surface font-mono text-[10px] uppercase tracking-[0.08em] text-cyan-300 transition hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded-sm px-1.5 py-0.5 ui-chip-surface font-mono text-[0.625rem] uppercase tracking-[0.08em] text-cyan-300 transition hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-30"
             >
               set
             </button>
           </div>
           {activeModel && !meta.models.includes(activeModel) && (
-            <p className="mt-0.5 px-2 font-mono text-[10px] text-zinc-500">
+            <p className="mt-0.5 px-2 font-mono text-[0.625rem] text-zinc-500">
               current: <span className="text-zinc-300">{activeModel}</span>
             </p>
           )}

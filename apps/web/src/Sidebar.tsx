@@ -160,7 +160,7 @@ export function Sidebar() {
         title="Expand devices"
         className="w-9 shrink-0 border-r border-zinc-800 ui-modal-surface hover:bg-zinc-900 transition-colors duration-[120ms] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
       >
-        <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+        <span className="[writing-mode:vertical-rl] rotate-180 text-[0.625rem] font-mono uppercase tracking-[0.18em] text-zinc-500">
           devices
         </span>
       </button>
@@ -171,7 +171,7 @@ export function Sidebar() {
     <aside className="w-[300px] shrink-0 border-r border-zinc-800 ui-modal-surface flex flex-col min-h-0">
       <div className="px-3 py-2 border-b border-zinc-800 space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-mono">devices</span>
+          <span className="text-[0.625rem] uppercase tracking-[0.18em] text-zinc-500 font-mono">devices</span>
           <span className="flex-1" />
           <FilterPresetsMenu />
           <button
@@ -243,7 +243,7 @@ export function Sidebar() {
           />
         )}
 
-        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-1.5 text-[0.6875rem] text-zinc-500">
           <button
             type="button"
             onClick={() => selectAll(visible.map((d) => d.serial))}
@@ -261,7 +261,7 @@ export function Sidebar() {
           </button>
         </div>
 
-        <div className="text-[11px] text-zinc-500 tabular-nums">
+        <div className="text-[0.6875rem] text-zinc-500 tabular-nums">
           {visible.length} visible • {selectedSerials.size} selected
         </div>
       </div>
@@ -498,7 +498,7 @@ function DeviceRow({
                 className="h-full w-full bg-transparent pl-2 pr-1 text-xs text-cyan-100 placeholder:text-zinc-600 focus:outline-none font-mono"
               />
               <ColorSwatchRow color={color} onSetColor={onSetColor} />
-              <span aria-hidden="true" className="pr-2 text-[9px] uppercase tracking-[0.16em] text-cyan-300/70">
+              <span aria-hidden="true" className="pr-2 text-[0.5625rem] uppercase tracking-[0.16em] text-cyan-300/70">
                 ⏎
               </span>
             </span>
@@ -541,7 +541,7 @@ function DeviceRow({
                   </StickyNote>
                 )}
               </span>
-              <span className="block text-[10px] text-zinc-500 truncate font-mono">
+              <span className="block text-[0.625rem] text-zinc-500 truncate font-mono">
                 {subtitle}
               </span>
             </span>
@@ -628,7 +628,7 @@ function ColorSwatchRow({
         onClick={() => onSetColor(null)}
         title="Clear color"
         aria-label="Clear color tag"
-        className={`h-3.5 w-3.5 rounded-full border border-zinc-700 inline-flex items-center justify-center text-[9px] text-zinc-500 hover:border-zinc-500 ${
+        className={`h-3.5 w-3.5 rounded-full border border-zinc-700 inline-flex items-center justify-center text-[0.5625rem] text-zinc-500 hover:border-zinc-500 ${
           !color ? 'ring-1 ring-zinc-400/50' : ''
         }`}
       >
@@ -766,7 +766,7 @@ function SceneTabs({
                   ? 'Click to activate · double-click to rename'
                   : 'Default scene'
             }
-            className={`group relative h-7 inline-flex items-center gap-1 rounded border pl-2 pr-1.5 text-[11px] transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+            className={`group relative h-7 inline-flex items-center gap-1 rounded border pl-2 pr-1.5 text-[0.6875rem] transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
               active
                 ? 'bg-cyan-500/12 border-cyan-500/45 text-cyan-100'
                 : 'border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700'
@@ -775,7 +775,7 @@ function SceneTabs({
             {hotkey != null && (
               <kbd
                 aria-hidden
-                className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded border px-1 font-mono text-[9px] tabular-nums ${
+                className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded border px-1 font-mono text-[0.5625rem] tabular-nums ${
                   active
                     ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200'
                     : 'border-zinc-800 ui-chip-surface text-zinc-500 group-hover:text-zinc-300'
@@ -881,7 +881,7 @@ function SceneEditor({
         placeholder={placeholder}
         aria-label={ariaLabel}
         maxLength={32}
-        className={`h-full bg-transparent pl-2 pr-1 text-[11px] text-cyan-100 placeholder:text-zinc-600 focus:outline-none font-mono ${widthClass}`}
+        className={`h-full bg-transparent pl-2 pr-1 text-[0.6875rem] text-cyan-100 placeholder:text-zinc-600 focus:outline-none font-mono ${widthClass}`}
       />
       {onDelete && (
         <button
@@ -896,7 +896,7 @@ function SceneEditor({
           <Trash2 size={10} />
         </button>
       )}
-      <span aria-hidden="true" className="px-1.5 text-[9px] uppercase tracking-[0.16em] text-cyan-300/70">
+      <span aria-hidden="true" className="px-1.5 text-[0.5625rem] uppercase tracking-[0.16em] text-cyan-300/70">
         ⏎
       </span>
     </span>
@@ -917,7 +917,7 @@ function StateChips({
     <button
       type="button"
       onClick={() => toggle(key)}
-      className={`flex-1 h-7 inline-flex items-center justify-center gap-1.5 rounded border text-[11px] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+      className={`flex-1 h-7 inline-flex items-center justify-center gap-1.5 rounded border text-[0.6875rem] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
         value[key]
           ? 'ui-chip-surface-active text-zinc-100'
           : 'border-zinc-900 text-zinc-500 hover:text-zinc-300'
@@ -967,7 +967,7 @@ function AttrChips({
         disabled={inert}
         aria-pressed={active}
         title={active ? `Showing only ${label} (click to clear)` : `Show only ${label}`}
-        className={`flex-1 h-7 inline-flex items-center justify-center gap-1.5 rounded border text-[11px] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed ${
+        className={`flex-1 h-7 inline-flex items-center justify-center gap-1.5 rounded border text-[0.6875rem] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed ${
           active
             ? activeTone
             : 'border-zinc-900 text-zinc-500 hover:text-zinc-300'
@@ -1018,7 +1018,7 @@ function FilterRow({
               type="button"
               key={`${label}-${key}`}
               onClick={() => toggle(key)}
-              className={`h-7 inline-flex items-center gap-1 px-2 rounded border text-[11px] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+              className={`h-7 inline-flex items-center gap-1 px-2 rounded border text-[0.6875rem] ui-chip-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
                 value[key]
                   ? 'ui-chip-surface-active text-zinc-100'
                   : 'border-zinc-900 text-zinc-500 hover:text-zinc-300'
@@ -1032,7 +1032,7 @@ function FilterRow({
           );
         })
       ) : emptyLabel ? (
-        <span className="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-900 text-zinc-600 text-[11px]">
+        <span className="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-900 text-zinc-600 text-[0.6875rem]">
           <Filter size={11} />
           {emptyLabel}
         </span>

@@ -79,7 +79,7 @@ export function AssistantDevicePicker({ open, onClose, onPick, query }: Props) {
       aria-label="Mention a device"
       className="absolute bottom-full left-2 right-2 z-50 mb-1 overflow-hidden rounded-md border border-zinc-700 ui-popover-surface shadow-2xl"
     >
-      <p className="border-b border-zinc-800 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+      <p className="border-b border-zinc-800 px-3 py-1.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-zinc-500">
         Mention a device {query ? <span className="text-zinc-300">·  filter: {query}</span> : null}
       </p>
       {flat.length === 0 && (
@@ -91,7 +91,7 @@ export function AssistantDevicePicker({ open, onClose, onPick, query }: Props) {
       <ul ref={itemsRef} className="max-h-60 overflow-auto py-1">
         {groups.map((group) => (
           <li key={group.label}>
-            <p className="px-3 pt-1.5 pb-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500">
+            <p className="px-3 pt-1.5 pb-0.5 font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-zinc-500">
               {group.label}
             </p>
             <ul>
@@ -124,7 +124,7 @@ export function AssistantDevicePicker({ open, onClose, onPick, query }: Props) {
                           <span className="font-mono text-zinc-200">{item.device.serial}</span>
                         )}
                       </span>
-                      <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">
+                      <span className="font-mono text-[0.5625rem] uppercase tracking-[0.08em] text-zinc-500">
                         {item.device.source}
                       </span>
                     </button>

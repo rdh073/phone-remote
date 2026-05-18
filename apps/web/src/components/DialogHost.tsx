@@ -77,7 +77,7 @@ function DialogShell({
           </h2>
         </div>
         {req.body && (
-          <div className="px-5 py-3 text-[13px] leading-relaxed text-zinc-300 whitespace-pre-wrap break-words max-h-[60vh] overflow-y-auto">
+          <div className="px-5 py-3 text-[0.8125rem] leading-relaxed text-zinc-300 whitespace-pre-wrap break-words max-h-[60vh] overflow-y-auto">
             {req.body}
           </div>
         )}

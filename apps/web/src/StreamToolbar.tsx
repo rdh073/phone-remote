@@ -147,7 +147,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
     <div className="space-y-4 text-xs">
       <header className="pb-2 border-b border-zinc-800 ui-popover-surface flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-400">Device controls</p>
+          <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-zinc-400">Device controls</p>
           <p className="mt-1 text-zinc-500">
             Targeting {targets().length} device{targets().length === 1 ? '' : 's'}
           </p>
@@ -157,7 +157,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
           onClick={toggleLock}
           aria-pressed={locked}
           title={locked ? 'Input locked — click or press Shift+L to unlock' : 'Lock input (Shift+L)'}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-md border px-2.5 text-[11px] uppercase tracking-[0.14em] transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+          className={`h-8 inline-flex items-center gap-1.5 rounded-md border px-2.5 text-[0.6875rem] uppercase tracking-[0.14em] transition-colors duration-[120ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
             locked
               ? 'border-amber-400/55 bg-amber-500/15 text-amber-200'
               : 'border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700'
@@ -165,12 +165,12 @@ export function StreamToolbar({ serial }: { serial: string }) {
         >
           {locked ? <Lock size={13} /> : <LockOpen size={13} />}
           {locked ? 'Locked' : 'Lock input'}
-          <kbd className="ml-1 inline-flex h-4 items-center rounded border border-current/40 px-1 font-mono text-[9px] opacity-70">⇧L</kbd>
+          <kbd className="ml-1 inline-flex h-4 items-center rounded border border-current/40 px-1 font-mono text-[0.5625rem] opacity-70">⇧L</kbd>
         </button>
       </header>
 
       <section className="space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Shortcuts</p>
+        <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-zinc-500">Shortcuts</p>
         <div className="grid grid-cols-2 gap-2">
           {SHORTCUTS.map((shortcut) => (
             <ToolbarButton
@@ -186,7 +186,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
       </section>
 
       <section className="space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Actions</p>
+        <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-zinc-500">Actions</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -210,7 +210,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
       </section>
 
       <form onSubmit={submitText} className="space-y-2">
-        <label htmlFor={`stream-text-${serial}`} className="block text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+        <label htmlFor={`stream-text-${serial}`} className="block text-[0.6875rem] uppercase tracking-[0.14em] text-zinc-500">
           Type text
         </label>
         <div className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
             {textRecall.position && (
               <span
                 aria-hidden="true"
-                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
+                className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded px-1 py-0.5"
                 title="Esc to return to your draft"
               >
                 {textRecall.position.current}/{textRecall.position.total}
@@ -249,7 +249,7 @@ export function StreamToolbar({ serial }: { serial: string }) {
 
       <NotesSection serial={serial} />
 
-      <div className="rounded-md border border-zinc-800 ui-popover-surface p-2 text-zinc-500 text-[11px] inline-flex items-center gap-2">
+      <div className="rounded-md border border-zinc-800 ui-popover-surface p-2 text-zinc-500 text-[0.6875rem] inline-flex items-center gap-2">
         <Keyboard size={13} />
         <span>Tip: press "f" in grid to jump into detail and "Esc" to close.</span>
       </div>
@@ -293,9 +293,9 @@ function NotesSection({ serial }: { serial: string }) {
   return (
     <section className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Notes</p>
+        <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-zinc-500">Notes</p>
         <span
-          className={`font-mono text-[10px] tabular-nums transition-opacity duration-[180ms] ${
+          className={`font-mono text-[0.625rem] tabular-nums transition-opacity duration-[180ms] ${
             saved ? 'text-emerald-300 opacity-100' : 'text-zinc-600 opacity-100'
           }`}
         >
@@ -309,7 +309,7 @@ function NotesSection({ serial }: { serial: string }) {
         aria-label="Device notes"
         maxLength={4096}
         rows={4}
-      className="w-full ui-popover-surface border border-zinc-800 rounded-md px-2.5 py-2 text-zinc-100 text-[12px] leading-relaxed font-mono placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40 resize-none"
+      className="w-full ui-popover-surface border border-zinc-800 rounded-md px-2.5 py-2 text-zinc-100 text-[0.75rem] leading-relaxed font-mono placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40 resize-none"
       />
     </section>
   );

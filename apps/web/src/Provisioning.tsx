@@ -48,7 +48,7 @@ function ProvisioningModal() {
           <div>
             <h2 className="text-lg font-semibold">Add device</h2>
             {hasTailscaleStep ? (
-              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[0.6875rem] text-zinc-400">
                 <StageChip n={1} tone="blue" label="join tailnet" />
                 <span aria-hidden className="text-zinc-600">→</span>
                 <StageChip n={2} tone="cyan" label="pair ADB" />
@@ -154,7 +154,7 @@ function StageChip({
   return (
     <span className="inline-flex items-center gap-1.5">
       <span
-        className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border px-1 font-mono text-[9px] tabular-nums ${dotTone}`}
+        className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border px-1 font-mono text-[0.5625rem] tabular-nums ${dotTone}`}
       >
         {n}
       </span>
@@ -178,7 +178,7 @@ function TabSwitch({
   // rather than a stretched row — labels vary too much in width for fair
   // stretch (8 chars for "QR" vs 20 for "Tailscale onboarding").
   const base =
-    'inline-flex items-center justify-center gap-1.5 text-[11px] py-1.5 px-2.5 rounded border transition-colors duration-[120ms]';
+    'inline-flex items-center justify-center gap-1.5 text-[0.6875rem] py-1.5 px-2.5 rounded border transition-colors duration-[120ms]';
   const active = 'bg-zinc-800 border-zinc-600 text-zinc-100 ui-chip-surface ui-chip-surface-active';
   const inactive = 'border-zinc-800 bg-zinc-900 ui-chip-surface text-zinc-400 hover:text-zinc-100';
   // Stage-1 (Tailscale) badge is blue-tinted to telegraph "do this first";
@@ -192,7 +192,7 @@ function TabSwitch({
     const offTone = 'border-zinc-700 bg-zinc-900 ui-chip-surface text-zinc-500';
     return (
       <span
-        className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border px-1 font-mono text-[9px] tabular-nums ${
+        className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border px-1 font-mono text-[0.5625rem] tabular-nums ${
           on ? onTone : offTone
         }`}
       >
@@ -217,7 +217,7 @@ function TabSwitch({
       {hasTailscaleStep && (
         <span
           aria-hidden
-          className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500 pl-1"
+          className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-zinc-500 pl-1"
         >
           Method
         </span>
@@ -269,7 +269,7 @@ function OrSep() {
   return (
     <span
       aria-hidden
-      className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-100 px-0.5"
+      className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-zinc-100 px-0.5"
     >
       or
     </span>
@@ -308,11 +308,11 @@ function QrPair({
       <div className="space-y-3 text-sm">
         {tailnet && (
           <p className="text-zinc-300">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
             Couldn't see the phone on the LAN.
           </p>
         )}
-        <div className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-[12.5px] text-amber-100 space-y-1.5">
+        <div className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-[0.78125rem] text-amber-100 space-y-1.5">
           <p className="font-medium">QR pairing needs the phone on the same LAN as the hub.</p>
           <p className="text-amber-200/85">
             If your phone is only reachable over Tailscale (mobile data, different Wi-Fi, AP isolation), the hub can't
@@ -399,7 +399,7 @@ function QrPair({
     <div className="space-y-3 text-sm">
       <p className="text-zinc-300">
         {tailnet && (
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
+          <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
         )}
         On the Android phone, enable <span className="font-medium">Developer Options → Wireless debugging</span> and tap{' '}
         <span className="font-medium">Pair device with QR code</span>. Then scan:
@@ -411,7 +411,7 @@ function QrPair({
       </div>
       <p className="text-center text-zinc-400 text-xs">{label}</p>
       {tailnet && (
-        <p className="text-[11px] text-amber-300/80 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5">
+        <p className="text-[0.6875rem] text-amber-300/80 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5">
           Heads up: this QR uses Android's <span className="font-medium">Wireless debugging</span> mDNS pairing — it
           only works when the phone is on the same LAN as the hub. For a remote phone, do{' '}
           <span className="font-medium">Tailscale onboarding</span> first, then use <span className="font-medium">Manual</span>{' '}
@@ -445,13 +445,13 @@ function TailscaleStep({
   return (
     <div className="space-y-3 text-sm">
       <p className="text-zinc-300">
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 1</span>
+        <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 1</span>
         Join the phone to the tailnet. Install the <span className="font-medium">Tailscale</span> Android app and follow the two steps below.
       </p>
 
-      <ol className="space-y-2.5 rounded border border-zinc-800 bg-zinc-950/40 ui-modal-surface p-3 text-[12px] text-zinc-300">
+      <ol className="space-y-2.5 rounded border border-zinc-800 bg-zinc-950/40 ui-modal-surface p-3 text-[0.75rem] text-zinc-300">
         <li className="flex gap-2.5">
-          <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[11px] tabular-nums text-cyan-100">
+          <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[0.6875rem] tabular-nums text-cyan-100">
             1
           </span>
           <div className="min-w-0 space-y-1.5">
@@ -464,7 +464,7 @@ function TailscaleStep({
           </div>
         </li>
         <li className="flex gap-2.5">
-          <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[11px] tabular-nums text-cyan-100">
+          <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[0.6875rem] tabular-nums text-cyan-100">
             2
           </span>
           <div className="min-w-0 space-y-1.5">
@@ -485,12 +485,12 @@ function TailscaleStep({
           title="Scan in order"
         >
           <span className="block w-7 border-t border-zinc-700/70"></span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-500">then</span>
+          <span className="font-mono text-[0.5625rem] uppercase tracking-[0.18em] text-zinc-500">then</span>
           <span className="block w-7 border-t border-zinc-700/70"></span>
         </span>
         <QrPanel index={2} caption="Auth key" value={authKey} />
       </div>
-      <p className="text-[11px] text-zinc-500 pt-1">
+      <p className="text-[0.6875rem] text-zinc-500 pt-1">
         After the phone shows <span className="text-zinc-300">connected</span> with a <span className="font-mono">100.x.y.z</span>{' '}
         address, continue to stage 2 to pair ADB over wireless debugging.
       </p>
@@ -510,13 +510,13 @@ function TailnetPairIntro({ onJump }: { onJump: () => void }) {
   return (
     <div className="space-y-2 text-sm">
       <p className="text-zinc-300">
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
+        <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
         Pair the phone's ADB over wireless debugging. Enable{' '}
         <span className="font-medium">Developer Options → Wireless debugging</span> on the phone, tap{' '}
         <span className="font-medium">Pair device with pairing code</span>, then enter the phone's Tailscale IP +
         pairing details below.
       </p>
-      <p className="text-[11px] text-zinc-500">
+      <p className="text-[0.6875rem] text-zinc-500">
         Haven't joined the tailnet yet? <button type="button" onClick={onJump} className="text-cyan-300 hover:text-cyan-200 underline">Go back to stage 1</button>.
       </p>
     </div>
@@ -565,12 +565,12 @@ function UsbConnect({
   return (
     <div className="space-y-3 text-sm">
       <p className="text-zinc-300">
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
+        <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-cyan-300/80 mr-1.5">Stage 2</span>
         Phone is tethered to your laptop via USB and is already on the tailnet. Enable ADB-over-TCP from your laptop,
         then the hub connects over the phone's <span className="font-mono">100.x.y.z</span> address.
       </p>
       {hasTailscaleStep && (
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-[0.6875rem] text-zinc-500">
           Haven't joined the tailnet yet?{' '}
           <button type="button" onClick={onBackToTailscale} className="text-cyan-300 hover:text-cyan-200 underline">
             Go back to stage 1
@@ -579,7 +579,7 @@ function UsbConnect({
         </p>
       )}
 
-      <ol className="space-y-2.5 rounded border border-zinc-800 bg-zinc-950/40 ui-modal-surface p-3 text-[12px] text-zinc-300">
+      <ol className="space-y-2.5 rounded border border-zinc-800 bg-zinc-950/40 ui-modal-surface p-3 text-[0.75rem] text-zinc-300">
         <li className="flex gap-2.5">
           <UsbStepBadge n={1} />
           <p className="min-w-0">
@@ -594,7 +594,7 @@ function UsbConnect({
               On your laptop (where the phone is plugged in), open a terminal and run:
             </p>
             <CopyField label="On your laptop" value="adb tcpip 5555" />
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[0.6875rem] text-zinc-500">
               Output should look like <span className="font-mono text-zinc-300">restarting in TCP mode port: 5555</span>.
               You can unplug the USB cable after this.
             </p>
@@ -649,7 +649,7 @@ function UsbConnect({
 
 function UsbStepBadge({ n }: { n: number }) {
   return (
-    <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[11px] tabular-nums text-cyan-100">
+    <span className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[0.6875rem] tabular-nums text-cyan-100">
       {n}
     </span>
   );
@@ -668,7 +668,7 @@ function QrPanel({
     <div className="flex flex-col items-center gap-1.5">
       {index != null && (
         <span
-          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[11px] tabular-nums text-cyan-100"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500/45 bg-cyan-500/15 font-mono text-[0.6875rem] tabular-nums text-cyan-100"
           aria-label={`Step ${index}`}
         >
           {index}
@@ -677,7 +677,7 @@ function QrPanel({
       <div className="bg-zinc-800/80 ui-popover-surface border border-zinc-700 p-2 rounded shadow-[0_4px_14px_-6px_rgba(0,0,0,0.6)]">
         <QRCodeSVG value={value} size={128} level="M" />
       </div>
-      <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">{caption}</span>
+      <span className="text-[0.625rem] uppercase tracking-[0.14em] text-zinc-400">{caption}</span>
     </div>
   );
 }
@@ -828,12 +828,12 @@ function FieldGroup({
   return (
     <div className="rounded-md border border-zinc-800 bg-zinc-950/40 ui-modal-surface p-3 space-y-2">
       <div className="flex items-baseline gap-2">
-        <span className="h-5 w-5 inline-flex items-center justify-center rounded-full bg-cyan-500/15 text-cyan-200 font-mono text-[10px] tabular-nums">
+        <span className="h-5 w-5 inline-flex items-center justify-center rounded-full bg-cyan-500/15 text-cyan-200 font-mono text-[0.625rem] tabular-nums">
           {step}
         </span>
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-300">{title}</span>
+        <span className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-zinc-300">{title}</span>
       </div>
-      <p className="text-[11px] leading-relaxed text-zinc-500 pl-7">{hint}</p>
+      <p className="text-[0.6875rem] leading-relaxed text-zinc-500 pl-7">{hint}</p>
       <div className="pl-7">{children}</div>
     </div>
   );
@@ -857,7 +857,7 @@ function LabeledInput({
     <label className="text-xs text-zinc-400 flex flex-col gap-1">
       <span className="flex items-baseline justify-between gap-2">
         <span>{label}</span>
-        {hint && <span className="text-[10px] text-zinc-600 truncate">{hint}</span>}
+        {hint && <span className="text-[0.625rem] text-zinc-600 truncate">{hint}</span>}
       </span>
       <input
         id={`pair-${name}`}
