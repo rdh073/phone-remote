@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from '@yume-chan/adb-scrcpy';
 import { DefaultServerPath, ScrcpyInstanceId } from '@yume-chan/scrcpy';
+import type { ScrcpyMediaStreamPacket } from '@yume-chan/scrcpy';
 import { ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
 import { getAdb } from './adb.js';
@@ -14,15 +15,8 @@ const DOWNLOAD_URL = `https://github.com/Genymobile/scrcpy/releases/download/v${
 const VENDOR_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../vendor');
 const JAR_PATH = resolve(VENDOR_DIR, `scrcpy-server-v${SCRCPY_VERSION}`);
 
-// Dual-stream defaults: the focused tile (`main`) gets high quality so input
-// + detail are readable; grid thumbnails (`thumb`) get a fraction of the
-// bandwidth so N tiles in a wallboard stay cheap. Operators can override per-
-// preset via the SCRCPY_(MAIN|THUMB)_* env vars; see infra/env.example.
 const DEFAULT_PRESETS = {
   main:  { maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 },
-  // HD baseline: clients that don't send explicit per-session overrides (older
-  // tabs, scripts hitting /ws/dev directly) still get readable thumbs. The
-  // ThumbQualityPicker on the web client overrides this per-session.
   thumb: { maxSize:  720, videoBitRate: 2_500_000, maxFps: 24 },
 } as const;
 
@@ -32,9 +26,6 @@ export function isScrcpyRes(v: unknown): v is ScrcpyRes {
   return v === 'main' || v === 'thumb';
 }
 
-// Env values are read at session-launch time, not at module load, so the
-// Settings hot-reload picks up changes for the next stream without a hub
-// restart. Existing live sessions keep the values they were started with.
 function envNumber(key: string, fallback: number): number {
   const raw = process.env[key];
   if (!raw) return fallback;
@@ -52,13 +43,237 @@ export function readPreset(res: ScrcpyRes): ScrcpyPreset {
   };
 }
 
-function samePreset(a: ScrcpyPreset, b: ScrcpyPreset): boolean {
-  return a.maxSize === b.maxSize && a.videoBitRate === b.videoBitRate && a.maxFps === b.maxFps;
+function presetKey(serial: string, preset: ScrcpyPreset): string {
+  return `${serial}|${preset.maxSize}|${preset.videoBitRate}|${preset.maxFps}`;
 }
 
 type Adb = Awaited<ReturnType<typeof getAdb>>;
 type Session = Awaited<ReturnType<typeof AdbScrcpyClient.start>>;
+export type ScrcpyController = NonNullable<Session['controller']>;
 const SCRCPY_PROC_PATTERN = 'com.genymobile.scrcpy';
+
+export type VideoMeta = { codec: number; width: number; height: number };
+export type ConsumerHandle = {
+  meta: VideoMeta;
+  controller: ScrcpyController | undefined;
+  detach: () => void;
+};
+export type ConsumerCallbacks = {
+  onPacket: (packet: ScrcpyMediaStreamPacket) => void;
+  onError: (err: Error) => void;
+  onClose: () => void;
+};
+
+/**
+ * Pool of WS consumers sharing one scrcpy session.
+ *
+ * Why this exists: scrcpy-server cold start is ~10-15s on most devices
+ * (pushServer + killStaleServer + handshake + first encoder warmup). Without
+ * a pool, every browser-side WS disconnect (IntersectionObserver pause,
+ * detail-modal toggle, quality switch, scroll-induced layout shift) eats
+ * that full cold start when the operator reattaches a second later.
+ *
+ * The pool keeps the scrcpy session alive for GRACE_MS after the last
+ * consumer leaves, so a reattach within the grace window is instant. New
+ * consumers also get the cached configuration packet immediately and ask the
+ * encoder for a fresh keyframe via resetVideo() — they're decoding within
+ * one frame interval (~40-66ms at 15-30fps) instead of the next natural
+ * keyframe (1-2s) or a full server restart (10-15s).
+ *
+ * Pattern straight from Tango's docs:
+ *   tangoadb.dev/scrcpy/control/reset-video
+ *
+ * One pool per (serial, preset) — quality switches still cost a full restart
+ * because encode params are baked into the scrcpy launch args.
+ */
+
+const GRACE_MS = 8000;
+
+type Pool = {
+  key: string;
+  serial: string;
+  preset: ScrcpyPreset;
+  session: Session;
+  meta: VideoMeta;
+  controller: ScrcpyController | undefined;
+  consumers: Set<ConsumerCallbacks>;
+  lastConfig: ScrcpyMediaStreamPacket | null;
+  graceTimer: NodeJS.Timeout | null;
+  closed: boolean;
+};
+
+const pools = new Map<string, Pool>();
+const pending = new Map<string, Promise<Pool>>();
+
+export async function attachConsumer(
+  serial: string,
+  res: ScrcpyRes,
+  override: Partial<ScrcpyPreset>,
+  callbacks: ConsumerCallbacks,
+): Promise<ConsumerHandle> {
+  const preset: ScrcpyPreset = { ...readPreset(res), ...override };
+  const key = presetKey(serial, preset);
+
+  let pool = pools.get(key);
+  if (!pool) {
+    let p = pending.get(key);
+    if (!p) {
+      p = launchPool(serial, preset, key);
+      pending.set(key, p);
+    }
+    try {
+      pool = await p;
+    } finally {
+      pending.delete(key);
+    }
+  }
+
+  if (pool.graceTimer) {
+    clearTimeout(pool.graceTimer);
+    pool.graceTimer = null;
+  }
+
+  pool.consumers.add(callbacks);
+
+  // Replay cached config so the decoder has SPS/PPS immediately. Then ask
+  // the encoder for a fresh keyframe so the new consumer starts decoding
+  // within one frame interval instead of waiting for the next natural one.
+  if (pool.lastConfig) {
+    try {
+      callbacks.onPacket(pool.lastConfig);
+    } catch {
+      // consumer collapse on first packet — caller's onClose/detach will tidy.
+    }
+  }
+  if (pool.controller && typeof (pool.controller as unknown as { resetVideo?: () => Promise<void> }).resetVideo === 'function') {
+    void (pool.controller as unknown as { resetVideo: () => Promise<void> })
+      .resetVideo()
+      .catch(() => {});
+  }
+
+  let detached = false;
+  const detach = () => {
+    if (detached) return;
+    detached = true;
+    pool!.consumers.delete(callbacks);
+    if (pool!.consumers.size === 0 && pools.get(key) === pool && !pool!.closed) {
+      pool!.graceTimer = setTimeout(() => closePool(key), GRACE_MS);
+    }
+  };
+
+  return { meta: pool.meta, controller: pool.controller, detach };
+}
+
+async function launchPool(serial: string, preset: ScrcpyPreset, key: string): Promise<Pool> {
+  const session = await launchScrcpy(serial, preset);
+  const video = await session.videoStream;
+  if (!video) {
+    await session.close().catch(() => {});
+    throw new Error('video stream disabled');
+  }
+
+  const pool: Pool = {
+    key,
+    serial,
+    preset,
+    session,
+    meta: { codec: video.metadata.codec, width: video.width, height: video.height },
+    controller: session.controller,
+    consumers: new Set(),
+    lastConfig: null,
+    graceTimer: null,
+    closed: false,
+  };
+  pools.set(key, pool);
+
+  void drainOutputForPool(session, serial);
+  void readerLoop(pool, video.stream);
+  void session.exited
+    .catch(() => {})
+    .finally(() => evictPool(key, new Error('scrcpy session exited')));
+
+  return pool;
+}
+
+async function readerLoop(pool: Pool, stream: ReadableStream<ScrcpyMediaStreamPacket>): Promise<void> {
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (pool.closed) break;
+      if (value.type === 'configuration') {
+        pool.lastConfig = value;
+      }
+      // Snapshot before iterating so a consumer-triggered detach during
+      // dispatch doesn't mutate-while-iterate.
+      const snapshot = Array.from(pool.consumers);
+      for (const c of snapshot) {
+        try {
+          c.onPacket(value);
+        } catch {
+          // Per-consumer failure shouldn't poison the whole pool. The WS
+          // socket has its own close handler that will detach the consumer.
+        }
+      }
+    }
+  } catch (err) {
+    evictPool(pool.key, err as Error);
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+async function drainOutputForPool(session: Session, _serial: string): Promise<void> {
+  // scrcpy-server stderr/stdout text. Drain to /dev/null so the underlying
+  // stream doesn't backpressure-block the server. We don't log per line here
+  // since the same line would otherwise multiply across N consumers — the
+  // routes layer logs ws connect/close which is what operators actually want.
+  try {
+    await session.output.pipeTo(new WritableStream());
+  } catch {
+    // session closing
+  }
+}
+
+function evictPool(key: string, err: Error): void {
+  const pool = pools.get(key);
+  if (!pool || pool.closed) return;
+  pool.closed = true;
+  pools.delete(key);
+  if (pool.graceTimer) {
+    clearTimeout(pool.graceTimer);
+    pool.graceTimer = null;
+  }
+  const consumers = Array.from(pool.consumers);
+  pool.consumers.clear();
+  for (const c of consumers) {
+    try {
+      c.onError(err);
+    } catch {
+      // ignore
+    }
+    try {
+      c.onClose();
+    } catch {
+      // ignore
+    }
+  }
+  pool.session.close().catch(() => {});
+}
+
+function closePool(key: string): void {
+  const pool = pools.get(key);
+  if (!pool) return;
+  if (pool.consumers.size > 0) return; // a consumer re-attached during the grace window
+  pool.closed = true;
+  pools.delete(key);
+  pool.session.close().catch(() => {});
+}
 
 let cached: Uint8Array | null = null;
 
@@ -85,60 +300,8 @@ function bytesAsStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
   });
 }
 
-type LiveEntry = { promise: Promise<Session>; res: ScrcpyRes; preset: ScrcpyPreset };
-const live = new Map<string, LiveEntry>();
-
-export async function startScrcpy(
-  serial: string,
-  res: ScrcpyRes = 'main',
-  override?: Partial<ScrcpyPreset>,
-): Promise<Session> {
-  // Idempotency model: at most one live entry per serial. Concurrent or rapid same-res
-  // calls (React strict-mode double-mount, WS reconnect storms) share a single in-flight
-  // launch promise. A request that lands while a prior session exists closes that session
-  // gracefully — Tango streams are single-reader so they can't be multiplexed, but a clean
-  // close + verify-kill prevents the prior scrcpy-server process from coexisting with the
-  // new one and exhausting device resources.
-  //
-  // Quality switching: when the resolved preset differs from the live one (operator picked
-  // a new thumb quality), the existing session is closed and a fresh one launched, even
-  // though `res` matches. The full preset is the cache key, not just the preset name.
-  const preset: ScrcpyPreset = { ...readPreset(res), ...override };
-  const existing = live.get(serial);
-  if (existing && existing.res === res && samePreset(existing.preset, preset)) {
-    return existing.promise;
-  }
-
-  const launch = (async () => {
-    if (existing) {
-      const prior = await existing.promise.catch(() => undefined);
-      await prior?.close().catch(() => {});
-    }
-    return launchScrcpy(serial, preset);
-  })();
-
-  const entry: LiveEntry = { promise: launch, res, preset };
-  live.set(serial, entry);
-
-  launch.then(
-    (session) => {
-      void session.exited.finally(() => {
-        if (live.get(serial) === entry) live.delete(serial);
-      });
-    },
-    () => {
-      if (live.get(serial) === entry) live.delete(serial);
-    },
-  );
-
-  return launch;
-}
-
 async function launchScrcpy(serial: string, preset: ScrcpyPreset): Promise<Session> {
   const adb = await getAdb(serial);
-  // Hub-side tracking covers sessions we know about, but stale scrcpy procs can also
-  // come from a prior hub crash, an aborted launch, or an ADB reconnect that orphaned
-  // the server. Converge the device to zero scrcpy procs before each fresh launch.
   await killStaleServer(adb);
   await AdbScrcpyClient.pushServer(adb, bytesAsStream(await loadJar()));
   const options = new AdbScrcpyOptionsLatest({
@@ -147,17 +310,12 @@ async function launchScrcpy(serial: string, preset: ScrcpyPreset): Promise<Sessi
     control: true,
     ...preset,
     scid: ScrcpyInstanceId.random(),
-    // All our devices are TCP (adb connect host:port), where `adb reverse` is unreliable
-    // on the Android daemon. Force forward tunneling — same as native scrcpy auto-picks
-    // when it detects WiFi. See yume-chan/ya-webadb#245.
     tunnelForward: true,
   });
   return AdbScrcpyClient.start(adb, DefaultServerPath, options);
 }
 
 async function killStaleServer(adb: Adb): Promise<void> {
-  // Idempotent: SIGTERM, verify with pgrep, escalate to SIGKILL, retry within budget.
-  // Returns once the device reports zero scrcpy procs or after ~500ms of attempts.
   await runShell(adb, `pkill -TERM -f ${SCRCPY_PROC_PATTERN} 2>/dev/null; true`);
   for (let attempt = 0; attempt < 5; attempt++) {
     await sleep(80);

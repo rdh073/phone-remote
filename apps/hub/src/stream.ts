@@ -6,12 +6,13 @@ import type { AndroidKeyCode, ScrcpyMediaStreamPacket } from '@yume-chan/scrcpy'
 
 import { ClientMessage, type ServerMessage } from '@phone-remote/protocol';
 
-import { startScrcpy, type ScrcpyPreset, type ScrcpyRes } from './scrcpy.js';
-
-type Session = Awaited<ReturnType<typeof startScrcpy>>;
-type VideoStream = NonNullable<Awaited<Session['videoStream']>>;
-type Controller = NonNullable<Session['controller']>;
-type OutputStream = Session['output'];
+import {
+  attachConsumer,
+  type ScrcpyController,
+  type ScrcpyPreset,
+  type ScrcpyRes,
+  type VideoMeta,
+} from './scrcpy.js';
 
 const PACKET_CONFIG = 0;
 const PACKET_DATA = 1;
@@ -23,81 +24,65 @@ export async function attachStreamSession(
   serial: string,
   res: ScrcpyRes,
   log: FastifyBaseLogger,
-  override?: Partial<ScrcpyPreset>,
+  override: Partial<ScrcpyPreset> = {},
 ): Promise<void> {
-  let session: Session | undefined;
-  try {
-    session = await startScrcpy(serial, res, override);
-    void drainOutput(session.output, serial, log);
-    void session.exited
-      .catch((err: unknown) => log.warn({ err, serial }, 'scrcpy server exited'))
-      .finally(() => socket.close());
-
-    const video = await session.videoStream;
-    if (!video) {
-      sendJson(socket, { kind: 'error', message: 'video disabled' });
+  let detach: (() => void) | undefined;
+  let closed = false;
+  const safeClose = () => {
+    if (closed) return;
+    closed = true;
+    detach?.();
+    try {
       socket.close();
-      return;
+    } catch {
+      // already closing
     }
+  };
+
+  try {
+    const handle = await attachConsumer(serial, res, override, {
+      onPacket: (packet) => {
+        if (socket.readyState !== WS_OPEN) return;
+        try {
+          socket.send(framePacket(packet));
+        } catch {
+          safeClose();
+        }
+      },
+      onError: (err) => {
+        log.warn({ err, serial }, 'scrcpy pool error');
+        sendJson(socket, { kind: 'error', message: err.message });
+      },
+      onClose: () => safeClose(),
+    });
+    detach = handle.detach;
 
     sendJson(socket, {
       kind: 'video-meta',
-      codec: video.metadata.codec,
-      width: video.width,
-      height: video.height,
+      codec: handle.meta.codec,
+      width: handle.meta.width,
+      height: handle.meta.height,
     });
 
-    const owned = session;
     socket.on('close', () => {
-      owned.close().catch((err: unknown) => log.error({ err }, 'scrcpy close failed'));
+      // Detach from the pool; the scrcpy session stays alive for the pool's
+      // grace window so a fast reconnect skips the encoder cold start.
+      detach?.();
     });
 
-    if (session.controller) {
-      bindControl(socket, session.controller, video, log);
+    if (handle.controller) {
+      bindControl(socket, handle.controller, handle.meta, log);
     }
-    void pumpVideo(video, socket, log);
   } catch (err) {
-    log.error({ err }, 'scrcpy session failed');
+    log.error({ err }, 'scrcpy attach failed');
     sendJson(socket, { kind: 'error', message: (err as Error).message });
-    await session?.close().catch(() => {});
-    socket.close();
-  }
-}
-
-async function drainOutput(output: OutputStream, serial: string, log: FastifyBaseLogger): Promise<void> {
-  const reader = output.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) return;
-      if (value) log.debug({ serial, line: value }, 'scrcpy');
-    }
-  } catch (err) {
-    log.debug({ err, serial }, 'scrcpy output drain stopped');
-  } finally {
-    reader.releaseLock();
+    safeClose();
   }
 }
 
 function sendJson(socket: WebSocket, msg: ServerMessage): void {
   if (socket.readyState !== WS_OPEN) return;
   socket.send(JSON.stringify(msg));
-}
-
-async function pumpVideo(video: VideoStream, socket: WebSocket, log: FastifyBaseLogger): Promise<void> {
-  const reader = video.stream.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (socket.readyState !== socket.OPEN) break;
-      socket.send(framePacket(value));
-    }
-  } catch (err) {
-    log.error({ err }, 'video pump error');
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 export function framePacket(p: ScrcpyMediaStreamPacket): Uint8Array {
@@ -109,14 +94,14 @@ export function framePacket(p: ScrcpyMediaStreamPacket): Uint8Array {
 
 function bindControl(
   socket: WebSocket,
-  controller: Controller,
-  video: VideoStream,
+  controller: ScrcpyController,
+  meta: VideoMeta,
   log: FastifyBaseLogger,
 ): void {
   socket.on('message', (raw: Buffer) => {
     const msg = parseClientMessage(raw, log);
     if (!msg) return;
-    dispatchControl(msg, controller, video).catch((err: unknown) => {
+    dispatchControl(msg, controller, meta).catch((err: unknown) => {
       log.error({ err }, 'control inject failed');
     });
   });
@@ -139,16 +124,16 @@ function parseClientMessage(raw: Buffer, log: FastifyBaseLogger): ClientMessage 
   return parsed.data;
 }
 
-async function dispatchControl(msg: ClientMessage, controller: Controller, video: VideoStream): Promise<void> {
+async function dispatchControl(msg: ClientMessage, controller: ScrcpyController, meta: VideoMeta): Promise<void> {
   switch (msg.kind) {
     case 'touch':
       await controller.injectTouch({
         action: toMotionAction(msg.action),
         pointerId: BigInt(msg.pointerId),
-        pointerX: Math.round(msg.x * video.width),
-        pointerY: Math.round(msg.y * video.height),
-        videoWidth: video.width,
-        videoHeight: video.height,
+        pointerX: Math.round(msg.x * meta.width),
+        pointerY: Math.round(msg.y * meta.height),
+        videoWidth: meta.width,
+        videoHeight: meta.height,
         pressure: msg.pressure,
         actionButton: msg.actionButton,
         buttons: msg.buttons,
