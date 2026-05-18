@@ -33,7 +33,12 @@ export function Grid() {
   const wallboard = useLayoutStore((s) => s.wallboard);
 
   return (
-    <section className="flex-1 min-w-0 overflow-hidden ui-popover-surface text-zinc-100 flex flex-col">
+    <section
+      id="main-content"
+      tabIndex={-1}
+      aria-label="Devices"
+      className="flex-1 min-w-0 overflow-hidden ui-popover-surface text-zinc-100 flex flex-col focus:outline-none"
+    >
       {!wallboard && (
         <div className="px-3 py-2 border-b border-zinc-800 flex items-center gap-2 text-xs text-zinc-400">
           <span className="text-zinc-500">{visible.length} tile{visible.length === 1 ? '' : 's'}</span>
@@ -67,9 +72,9 @@ function EmptyState({ onAdd, hasDevices }: { onAdd: () => void; hasDevices: bool
   return (
     <div className="h-full min-h-[340px] flex items-center justify-center">
       <div className="w-full max-w-xl border border-zinc-800 ui-modal-surface rounded-md p-8 text-center space-y-4">
-        <p className="text-sm text-zinc-300">
+        <h2 className="text-sm text-zinc-300 font-normal">
           {hasDevices ? 'No devices match your current filters.' : 'No devices have been paired yet.'}
-        </p>
+        </h2>
         <p className="text-xs text-zinc-500">
           Pair one now to start remote stream control and monitoring.
         </p>

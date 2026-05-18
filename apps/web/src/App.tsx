@@ -72,6 +72,12 @@ function AuthedShell() {
   const wallboard = useLayoutStore((s) => s.wallboard);
   return (
     <main className="h-screen ui-popover-surface text-zinc-100 flex flex-col overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-3 focus:py-2 focus:rounded focus:bg-cyan-400 focus:text-zinc-950 focus:text-xs focus:font-semibold focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+      >
+        Skip to device grid
+      </a>
       <Provisioning />
       {!wallboard && <Topbar />}
       <div className="flex-1 min-h-0 flex overflow-hidden">

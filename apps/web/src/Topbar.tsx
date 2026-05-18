@@ -71,18 +71,28 @@ export function Topbar() {
               <Smartphone size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold tracking-tight">phone-remote</p>
+              <h1 className="text-sm font-semibold tracking-tight">phone-remote</h1>
               <p className="text-[11px] text-zinc-400">operator command center</p>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div
+            className="hidden lg:flex items-center gap-2"
+            role="status"
+            aria-live="polite"
+            aria-label="Device counts"
+          >
             <Metric icon={<Radio size={14} />} label="online" value={counts.online} tone="emerald" />
             <Metric icon={<ShieldAlert size={14} />} label="unauthorized" value={counts.unauthorized} tone="amber" />
             <Metric icon={<WifiOff size={14} />} label="offline" value={counts.offline} tone="zinc" />
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs">
+          <div
+            className="hidden sm:flex items-center gap-2 text-xs"
+            role="status"
+            aria-live="polite"
+            aria-label="Tailnet and device summary"
+          >
             <span
               className={`h-8 inline-flex items-center gap-2 rounded border px-2.5 ${
                 tailnet
