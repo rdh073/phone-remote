@@ -18,7 +18,7 @@ import { downloadDeviceScreenshot } from './lib/download';
 import { useGridKeyboard } from './hooks/useGridKeyboard';
 import { useInputHistory } from './hooks/useInputHistory';
 import { useVisibleDevices } from './hooks/useVisibleDevices';
-import { SLIDER_MAX, SLIDER_MIN, tileMinPxFromCols } from './lib/colOptions';
+import { MAX_VISIBLE_TILES, SLIDER_MAX, SLIDER_MIN, clampCols } from './lib/colOptions';
 
 export function Grid() {
   const devices = useDevicesStore((s) => s.devices);
@@ -27,11 +27,13 @@ export function Grid() {
   const setCols = useDevicesStore((s) => s.setCols);
   const startProvision = useProvisioningStore((s) => s.start);
 
-  const visible = useVisibleDevices();
+  const allVisible = useVisibleDevices();
+  const visible = useMemo(() => allVisible.slice(0, MAX_VISIBLE_TILES), [allVisible]);
   const visibleSerials = useMemo(() => visible.map((d) => d.serial), [visible]);
   useGridKeyboard(visibleSerials);
   const wallboard = useLayoutStore((s) => s.wallboard);
-  const tileMinPx = tileMinPxFromCols(cols);
+  const renderedCols = clampCols(cols);
+  const truncated = allVisible.length - visible.length;
 
   return (
     <section
@@ -42,7 +44,17 @@ export function Grid() {
     >
       {!wallboard && (
         <div className="px-3 py-2 border-b border-zinc-800 flex items-center gap-2 text-xs text-zinc-400">
-          <span className="text-zinc-500">{visible.length} tile{visible.length === 1 ? '' : 's'}</span>
+          <span className="text-zinc-500">
+            {visible.length} tile{visible.length === 1 ? '' : 's'}
+            {truncated > 0 && (
+              <span
+                className="ml-1.5 text-amber-300/80"
+                title={`${truncated} additional device${truncated === 1 ? '' : 's'} hidden — narrow the filter to bring them into view`}
+              >
+                (+{truncated} hidden · max {MAX_VISIBLE_TILES})
+              </span>
+            )}
+          </span>
           <span className="flex-1" />
           <TileSizeSlider value={cols} onChange={setCols} />
         </div>
@@ -55,7 +67,7 @@ export function Grid() {
           <div
             data-grid-root
             className={wallboard ? 'grid gap-1' : 'grid gap-2'}
-            style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${tileMinPx}px, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${renderedCols}, minmax(0, 1fr))` }}
           >
             {visible.map((d) => (
               <Tile key={d.serial} serial={d.serial} res="thumb" />
@@ -93,13 +105,13 @@ function EmptyState({ onAdd, hasDevices }: { onAdd: () => void; hasDevices: bool
 }
 
 function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  // Slider value (1-32) maps to a tile min-width; the grid uses auto-fit so
-  // the actual column count derives from viewport width / tile-min, and rows
-  // wrap when devices overflow. Resizing the window reflows automatically.
+  // Slider value is the literal column count, locked to 4-8. Grid is
+  // repeat(N, minmax(0, 1fr)) so tiles auto-size to viewport/N and rows
+  // wrap naturally when devices > N (capped at MAX_VISIBLE_TILES).
   return (
     <div
       className="inline-flex items-center gap-1.5"
-      title="Tile density — drag right for smaller tiles (more per row), left for bigger tiles. Rows wrap automatically."
+      title="Grid columns — 4 (biggest tiles) to 8 (densest). Rows wrap automatically."
     >
       <Square size={11} className="text-zinc-500" aria-hidden />
       <input
@@ -109,11 +121,11 @@ function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: numb
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        aria-label="Tile density"
+        aria-label="Grid columns"
         aria-valuemin={SLIDER_MIN}
         aria-valuemax={SLIDER_MAX}
         aria-valuenow={value}
-        aria-valuetext={`density ${value} of ${SLIDER_MAX}`}
+        aria-valuetext={`${value} column${value === 1 ? '' : 's'}`}
         className="w-32 accent-cyan-500 cursor-pointer touch-target-range"
       />
       <Grid2x2 size={11} className="text-zinc-500" aria-hidden />

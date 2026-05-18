@@ -22,7 +22,7 @@ export function WallboardExitButton() {
     >
       <div
         className="inline-flex h-full items-center gap-1.5 px-2.5"
-        title="Tile density — drag right for smaller tiles (more per row), left for bigger tiles"
+        title="Grid columns — 4 (biggest) to 8 (densest)"
       >
         <Square size={11} className="text-zinc-500" aria-hidden />
         <input
@@ -32,11 +32,11 @@ export function WallboardExitButton() {
           step={1}
           value={cols}
           onChange={(e) => setCols(Number(e.target.value))}
-          aria-label="Tile density"
+          aria-label="Grid columns"
           aria-valuemin={SLIDER_MIN}
           aria-valuemax={SLIDER_MAX}
           aria-valuenow={cols}
-          aria-valuetext={`density ${cols} of ${SLIDER_MAX}`}
+          aria-valuetext={`${cols} column${cols === 1 ? '' : 's'}`}
           className="w-28 accent-cyan-500 cursor-pointer touch-target-range"
         />
         <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
@@ -45,7 +45,7 @@ export function WallboardExitButton() {
           aria-live="polite"
         >
           <span className="text-zinc-100">{cols}</span>
-          <span className="text-zinc-500 text-[0.5625rem] uppercase tracking-[0.14em]">/{SLIDER_MAX}</span>
+          <span className="text-zinc-500 text-[0.5625rem] uppercase tracking-[0.14em]">c</span>
         </span>
       </div>
       <button
