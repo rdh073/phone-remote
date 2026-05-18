@@ -18,7 +18,7 @@ import { downloadDeviceScreenshot } from './lib/download';
 import { useGridKeyboard } from './hooks/useGridKeyboard';
 import { useInputHistory } from './hooks/useInputHistory';
 import { useVisibleDevices } from './hooks/useVisibleDevices';
-import { SLIDER_MAX, SLIDER_MIN, effectiveCols } from './lib/colOptions';
+import { SLIDER_MAX, SLIDER_MIN, tileMinPxFromCols } from './lib/colOptions';
 
 export function Grid() {
   const devices = useDevicesStore((s) => s.devices);
@@ -31,7 +31,7 @@ export function Grid() {
   const visibleSerials = useMemo(() => visible.map((d) => d.serial), [visible]);
   useGridKeyboard(visibleSerials);
   const wallboard = useLayoutStore((s) => s.wallboard);
-  const renderedCols = effectiveCols(cols, visible.length);
+  const tileMinPx = tileMinPxFromCols(cols);
 
   return (
     <section
@@ -55,7 +55,7 @@ export function Grid() {
           <div
             data-grid-root
             className={wallboard ? 'grid gap-1' : 'grid gap-2'}
-            style={{ gridTemplateColumns: `repeat(${renderedCols}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${tileMinPx}px, 1fr))` }}
           >
             {visible.map((d) => (
               <Tile key={d.serial} serial={d.serial} res="thumb" />
@@ -93,13 +93,13 @@ function EmptyState({ onAdd, hasDevices }: { onAdd: () => void; hasDevices: bool
 }
 
 function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  // Slider value (1-32) is the target column count. The grid caps it at the
-  // visible device count via effectiveCols(), so high positions never produce
-  // empty cells — rows wrap automatically whenever devices > cols.
+  // Slider value (1-32) maps to a tile min-width; the grid uses auto-fit so
+  // the actual column count derives from viewport width / tile-min, and rows
+  // wrap when devices overflow. Resizing the window reflows automatically.
   return (
     <div
       className="inline-flex items-center gap-1.5"
-      title="Grid columns — drag right for more (smaller) tiles, left for fewer (bigger) tiles. Rows wrap automatically."
+      title="Tile density — drag right for smaller tiles (more per row), left for bigger tiles. Rows wrap automatically."
     >
       <Square size={11} className="text-zinc-500" aria-hidden />
       <input
@@ -109,11 +109,11 @@ function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: numb
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        aria-label="Grid columns"
+        aria-label="Tile density"
         aria-valuemin={SLIDER_MIN}
         aria-valuemax={SLIDER_MAX}
         aria-valuenow={value}
-        aria-valuetext={`${value} column${value === 1 ? '' : 's'}`}
+        aria-valuetext={`density ${value} of ${SLIDER_MAX}`}
         className="w-32 accent-cyan-500 cursor-pointer touch-target-range"
       />
       <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
