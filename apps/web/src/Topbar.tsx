@@ -11,6 +11,7 @@ import { useProvisioningStore } from './stores/provisioning';
 import { useScratchpadStore } from './stores/scratchpad';
 import { getDeviceLocationKeys } from './deviceFilters';
 import { useThemeStore } from './stores/theme';
+import { ThumbQualityPicker } from './components/ThumbQualityPicker';
 
 export function Topbar() {
   const selectedCount = useDevicesStore((s) => s.selectedSerials.size);
@@ -134,6 +135,8 @@ export function Topbar() {
             >
               <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
             </button>
+
+            <ThumbQualityPicker />
 
             <button
               type="button"

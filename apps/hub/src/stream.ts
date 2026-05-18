@@ -6,7 +6,7 @@ import type { AndroidKeyCode, ScrcpyMediaStreamPacket } from '@yume-chan/scrcpy'
 
 import { ClientMessage, type ServerMessage } from '@phone-remote/protocol';
 
-import { startScrcpy, type ScrcpyRes } from './scrcpy.js';
+import { startScrcpy, type ScrcpyPreset, type ScrcpyRes } from './scrcpy.js';
 
 type Session = Awaited<ReturnType<typeof startScrcpy>>;
 type VideoStream = NonNullable<Awaited<Session['videoStream']>>;
@@ -23,10 +23,11 @@ export async function attachStreamSession(
   serial: string,
   res: ScrcpyRes,
   log: FastifyBaseLogger,
+  override?: Partial<ScrcpyPreset>,
 ): Promise<void> {
   let session: Session | undefined;
   try {
-    session = await startScrcpy(serial, res);
+    session = await startScrcpy(serial, res, override);
     void drainOutput(session.output, serial, log);
     void session.exited
       .catch((err: unknown) => log.warn({ err, serial }, 'scrcpy server exited'))

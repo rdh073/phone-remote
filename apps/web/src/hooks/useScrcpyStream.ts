@@ -7,6 +7,7 @@ import { type ClientMessage } from '@phone-remote/protocol';
 import { registerSender } from '../lib/fanout';
 import { useInputLockStore } from '../stores/inputLock';
 import { useReconnectStore } from '../stores/reconnect';
+import { getThumbQuality, useVideoQualityStore } from '../stores/videoQuality';
 import { parseServerMessage, parseStreamPacket } from '../lib/streamSocket';
 
 export type VideoMeta = { codec: number; width: number; height: number };
@@ -37,6 +38,7 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
   const [health, setHealth] = useState<StreamHealth>('connecting');
   const [stats, setStats] = useState<StreamStats>({ fps: 0, kbps: 0, fpsSamples: [], kbpsSamples: [] });
   const reconnectGen = useReconnectStore((s) => s.counters[serial] ?? 0);
+  const thumbTier = useVideoQualityStore((s) => s.tier);
   const wsRef = useRef<WebSocket | null>(null);
   const pendingMessagesRef = useRef<string[]>([]);
   const lastFrameAtRef = useRef<number | null>(null);
@@ -99,7 +101,14 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
       }
     };
 
-    const ws = new WebSocket(`/ws/dev/${encodeURIComponent(serial)}?res=${res}`);
+    const params = new URLSearchParams({ res });
+    if (res === 'thumb') {
+      const q = getThumbQuality(thumbTier);
+      params.set('maxSize', String(q.maxSize));
+      params.set('bitrate', String(q.videoBitRate));
+      params.set('fps', String(q.maxFps));
+    }
+    const ws = new WebSocket(`/ws/dev/${encodeURIComponent(serial)}?${params.toString()}`);
     ws.binaryType = 'arraybuffer';
     wsRef.current = ws;
     ws.onerror = () => {
@@ -228,7 +237,7 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
       pendingMessagesRef.current = [];
       lastFrameAtRef.current = null;
     };
-  }, [serial, res, canvasRef, reconnectGen, paused]);
+  }, [serial, res, canvasRef, reconnectGen, paused, thumbTier]);
 
   const send = (msg: ClientMessage) => {
     const ws = wsRef.current;

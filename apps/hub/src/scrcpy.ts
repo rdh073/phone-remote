@@ -20,10 +20,14 @@ const JAR_PATH = resolve(VENDOR_DIR, `scrcpy-server-v${SCRCPY_VERSION}`);
 // preset via the SCRCPY_(MAIN|THUMB)_* env vars; see infra/env.example.
 const DEFAULT_PRESETS = {
   main:  { maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 },
-  thumb: { maxSize:  480, videoBitRate: 1_000_000, maxFps: 15 },
+  // HD baseline: clients that don't send explicit per-session overrides (older
+  // tabs, scripts hitting /ws/dev directly) still get readable thumbs. The
+  // ThumbQualityPicker on the web client overrides this per-session.
+  thumb: { maxSize:  720, videoBitRate: 2_500_000, maxFps: 24 },
 } as const;
 
 export type ScrcpyRes = keyof typeof DEFAULT_PRESETS;
+export type ScrcpyPreset = { maxSize: number; videoBitRate: number; maxFps: number };
 export function isScrcpyRes(v: unknown): v is ScrcpyRes {
   return v === 'main' || v === 'thumb';
 }
@@ -38,7 +42,7 @@ function envNumber(key: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-export function readPreset(res: ScrcpyRes): { maxSize: number; videoBitRate: number; maxFps: number } {
+export function readPreset(res: ScrcpyRes): ScrcpyPreset {
   const upper = res.toUpperCase();
   const d = DEFAULT_PRESETS[res];
   return {
@@ -46,6 +50,10 @@ export function readPreset(res: ScrcpyRes): { maxSize: number; videoBitRate: num
     videoBitRate: envNumber(`SCRCPY_${upper}_VIDEO_BITRATE`, d.videoBitRate),
     maxFps: envNumber(`SCRCPY_${upper}_MAX_FPS`, d.maxFps),
   };
+}
+
+function samePreset(a: ScrcpyPreset, b: ScrcpyPreset): boolean {
+  return a.maxSize === b.maxSize && a.videoBitRate === b.videoBitRate && a.maxFps === b.maxFps;
 }
 
 type Adb = Awaited<ReturnType<typeof getAdb>>;
@@ -77,18 +85,27 @@ function bytesAsStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
   });
 }
 
-type LiveEntry = { promise: Promise<Session>; res: ScrcpyRes };
+type LiveEntry = { promise: Promise<Session>; res: ScrcpyRes; preset: ScrcpyPreset };
 const live = new Map<string, LiveEntry>();
 
-export async function startScrcpy(serial: string, res: ScrcpyRes = 'main'): Promise<Session> {
+export async function startScrcpy(
+  serial: string,
+  res: ScrcpyRes = 'main',
+  override?: Partial<ScrcpyPreset>,
+): Promise<Session> {
   // Idempotency model: at most one live entry per serial. Concurrent or rapid same-res
   // calls (React strict-mode double-mount, WS reconnect storms) share a single in-flight
   // launch promise. A request that lands while a prior session exists closes that session
   // gracefully — Tango streams are single-reader so they can't be multiplexed, but a clean
   // close + verify-kill prevents the prior scrcpy-server process from coexisting with the
   // new one and exhausting device resources.
+  //
+  // Quality switching: when the resolved preset differs from the live one (operator picked
+  // a new thumb quality), the existing session is closed and a fresh one launched, even
+  // though `res` matches. The full preset is the cache key, not just the preset name.
+  const preset: ScrcpyPreset = { ...readPreset(res), ...override };
   const existing = live.get(serial);
-  if (existing && existing.res === res) {
+  if (existing && existing.res === res && samePreset(existing.preset, preset)) {
     return existing.promise;
   }
 
@@ -97,10 +114,10 @@ export async function startScrcpy(serial: string, res: ScrcpyRes = 'main'): Prom
       const prior = await existing.promise.catch(() => undefined);
       await prior?.close().catch(() => {});
     }
-    return launchScrcpy(serial, res);
+    return launchScrcpy(serial, preset);
   })();
 
-  const entry: LiveEntry = { promise: launch, res };
+  const entry: LiveEntry = { promise: launch, res, preset };
   live.set(serial, entry);
 
   launch.then(
@@ -117,14 +134,13 @@ export async function startScrcpy(serial: string, res: ScrcpyRes = 'main'): Prom
   return launch;
 }
 
-async function launchScrcpy(serial: string, res: ScrcpyRes): Promise<Session> {
+async function launchScrcpy(serial: string, preset: ScrcpyPreset): Promise<Session> {
   const adb = await getAdb(serial);
   // Hub-side tracking covers sessions we know about, but stale scrcpy procs can also
   // come from a prior hub crash, an aborted launch, or an ADB reconnect that orphaned
   // the server. Converge the device to zero scrcpy procs before each fresh launch.
   await killStaleServer(adb);
   await AdbScrcpyClient.pushServer(adb, bytesAsStream(await loadJar()));
-  const preset = readPreset(res);
   const options = new AdbScrcpyOptionsLatest({
     video: true,
     audio: false,

@@ -20,9 +20,10 @@ describe('readPreset', () => {
   });
 
   it('returns the dual-stream defaults when no env is set', () => {
-    // main = focused tile (high quality), thumb = grid thumbnail (cheap).
+    // main = focused tile (high quality), thumb = HD baseline for tabs that
+    // don't send per-session overrides via the ThumbQualityPicker.
     expect(readPreset('main')).toEqual({ maxSize: 1280, videoBitRate: 6_000_000, maxFps: 30 });
-    expect(readPreset('thumb')).toEqual({ maxSize: 480, videoBitRate: 1_000_000, maxFps: 15 });
+    expect(readPreset('thumb')).toEqual({ maxSize: 720, videoBitRate: 2_500_000, maxFps: 24 });
   });
 
   it('honors per-preset env overrides', () => {
@@ -48,6 +49,6 @@ describe('readPreset', () => {
     process.env.SCRCPY_MAIN_MAX_SIZE = '1920';
     // thumb left unset → falls back to its own (different) default, not main's.
     expect(readPreset('main').maxSize).toBe(1920);
-    expect(readPreset('thumb').maxSize).toBe(480);
+    expect(readPreset('thumb').maxSize).toBe(720);
   });
 });
