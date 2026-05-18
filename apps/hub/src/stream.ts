@@ -6,13 +6,12 @@ import type { AndroidKeyCode, ScrcpyMediaStreamPacket } from '@yume-chan/scrcpy'
 
 import { ClientMessage, type ServerMessage } from '@phone-remote/protocol';
 
-import {
-  attachConsumer,
-  type ScrcpyController,
-  type ScrcpyPreset,
-  type ScrcpyRes,
-  type VideoMeta,
-} from './scrcpy.js';
+import { startScrcpy, type ScrcpyPreset, type ScrcpyRes } from './scrcpy.js';
+
+type Session = Awaited<ReturnType<typeof startScrcpy>>;
+type VideoStream = NonNullable<Awaited<Session['videoStream']>>;
+type Controller = NonNullable<Session['controller']>;
+type OutputStream = Session['output'];
 
 const PACKET_CONFIG = 0;
 const PACKET_DATA = 1;
@@ -24,80 +23,81 @@ export async function attachStreamSession(
   serial: string,
   res: ScrcpyRes,
   log: FastifyBaseLogger,
-  override: Partial<ScrcpyPreset> = {},
+  override?: Partial<ScrcpyPreset>,
 ): Promise<void> {
-  let detach: (() => void) | undefined;
-  let socketClosed = false;
-  let teardownStarted = false;
-
-  // Register the close handler BEFORE we await attachConsumer — the pool's
-  // cold start can take 10-15s on first attach, and the browser may give up
-  // before then. Without this, the consumer leaks into pool.consumers
-  // forever and prevents the pool's grace-window teardown from firing.
-  socket.on('close', () => {
-    socketClosed = true;
-    detach?.();
-  });
-
-  const safeClose = () => {
-    if (teardownStarted) return;
-    teardownStarted = true;
-    detach?.();
-    if (!socketClosed) {
-      try {
-        socket.close();
-      } catch {
-        // already closing
-      }
-    }
-  };
-
+  let session: Session | undefined;
   try {
-    const handle = await attachConsumer(serial, res, override, {
-      onPacket: (packet) => {
-        if (socket.readyState !== WS_OPEN) return;
-        try {
-          socket.send(framePacket(packet));
-        } catch {
-          safeClose();
-        }
-      },
-      onError: (err) => {
-        log.warn({ err, serial }, 'scrcpy pool error');
-        sendJson(socket, { kind: 'error', message: err.message });
-      },
-      onClose: () => safeClose(),
-    });
-    detach = handle.detach;
+    session = await startScrcpy(serial, res, override);
+    void drainOutput(session.output, serial, log);
+    void session.exited
+      .catch((err: unknown) => log.warn({ err, serial }, 'scrcpy server exited'))
+      .finally(() => socket.close());
 
-    // Browser may have given up during the cold start — detach immediately
-    // so the consumer doesn't sit in the pool waiting for a stream that has
-    // no recipient.
-    if (socketClosed) {
-      detach();
+    const video = await session.videoStream;
+    if (!video) {
+      sendJson(socket, { kind: 'error', message: 'video disabled' });
+      socket.close();
       return;
     }
 
     sendJson(socket, {
       kind: 'video-meta',
-      codec: handle.meta.codec,
-      width: handle.meta.width,
-      height: handle.meta.height,
+      codec: video.metadata.codec,
+      width: video.width,
+      height: video.height,
     });
 
-    if (handle.controller) {
-      bindControl(socket, handle.controller, handle.meta, log);
+    const owned = session;
+    socket.on('close', () => {
+      owned.close().catch((err: unknown) => log.error({ err }, 'scrcpy close failed'));
+    });
+
+    if (session.controller) {
+      bindControl(socket, session.controller, video, log);
+    }
+    void pumpVideo(video, socket, log);
+  } catch (err) {
+    log.error({ err }, 'scrcpy session failed');
+    sendJson(socket, { kind: 'error', message: (err as Error).message });
+    await session?.close().catch(() => {});
+    socket.close();
+  }
+}
+
+async function drainOutput(output: OutputStream, serial: string, log: FastifyBaseLogger): Promise<void> {
+  const reader = output.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      if (value) log.debug({ serial, line: value }, 'scrcpy');
     }
   } catch (err) {
-    log.error({ err }, 'scrcpy attach failed');
-    sendJson(socket, { kind: 'error', message: (err as Error).message });
-    safeClose();
+    log.debug({ err, serial }, 'scrcpy output drain stopped');
+  } finally {
+    reader.releaseLock();
   }
 }
 
 function sendJson(socket: WebSocket, msg: ServerMessage): void {
   if (socket.readyState !== WS_OPEN) return;
   socket.send(JSON.stringify(msg));
+}
+
+async function pumpVideo(video: VideoStream, socket: WebSocket, log: FastifyBaseLogger): Promise<void> {
+  const reader = video.stream.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (socket.readyState !== socket.OPEN) break;
+      socket.send(framePacket(value));
+    }
+  } catch (err) {
+    log.error({ err }, 'video pump error');
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export function framePacket(p: ScrcpyMediaStreamPacket): Uint8Array {
@@ -109,14 +109,14 @@ export function framePacket(p: ScrcpyMediaStreamPacket): Uint8Array {
 
 function bindControl(
   socket: WebSocket,
-  controller: ScrcpyController,
-  meta: VideoMeta,
+  controller: Controller,
+  video: VideoStream,
   log: FastifyBaseLogger,
 ): void {
   socket.on('message', (raw: Buffer) => {
     const msg = parseClientMessage(raw, log);
     if (!msg) return;
-    dispatchControl(msg, controller, meta).catch((err: unknown) => {
+    dispatchControl(msg, controller, video).catch((err: unknown) => {
       log.error({ err }, 'control inject failed');
     });
   });
@@ -139,16 +139,16 @@ function parseClientMessage(raw: Buffer, log: FastifyBaseLogger): ClientMessage 
   return parsed.data;
 }
 
-async function dispatchControl(msg: ClientMessage, controller: ScrcpyController, meta: VideoMeta): Promise<void> {
+async function dispatchControl(msg: ClientMessage, controller: Controller, video: VideoStream): Promise<void> {
   switch (msg.kind) {
     case 'touch':
       await controller.injectTouch({
         action: toMotionAction(msg.action),
         pointerId: BigInt(msg.pointerId),
-        pointerX: Math.round(msg.x * meta.width),
-        pointerY: Math.round(msg.y * meta.height),
-        videoWidth: meta.width,
-        videoHeight: meta.height,
+        pointerX: Math.round(msg.x * video.width),
+        pointerY: Math.round(msg.y * video.height),
+        videoWidth: video.width,
+        videoHeight: video.height,
         pressure: msg.pressure,
         actionButton: msg.actionButton,
         buttons: msg.buttons,

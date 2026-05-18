@@ -67,17 +67,6 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
     let packetController: ReadableStreamDefaultController<ScrcpyMediaStreamPacket> | undefined;
     let packetStreamClosed = false;
     let decoder: WebCodecsVideoDecoder | undefined;
-    // Binary frames can arrive before the decoder is wired up — video-meta
-    // arrives, we start `waitForCanvas()`, the canvas takes a few ms to mount,
-    // and during that gap the hub may pump the configuration packet + first
-    // keyframe (especially with the server-side session pool that holds the
-    // session across reconnects and uses resetVideo to emit a fresh config on
-    // each attach). Drop them here and the decoder is stuck waiting for the
-    // next natural keyframe (1-2s) — which manifested as `stalled` / `no
-    // stream` even though video was technically flowing. Buffer until the
-    // packet stream exists, then flush in order.
-    const pendingBinary: ArrayBuffer[] = [];
-    const PENDING_BINARY_LIMIT = 240; // ~10s at 24fps; per-WS, GC'd on teardown
 
     const closePacketStream = () => {
       if (!packetController || packetStreamClosed) return;
@@ -152,22 +141,6 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
             const stream = new ReadableStream<ScrcpyMediaStreamPacket>({
               start(controller) {
                 packetController = controller;
-                // Flush anything that landed during the async setup.
-                for (const buf of pendingBinary) {
-                  const packet = parseStreamPacket(buf);
-                  if (!packet) continue;
-                  try {
-                    controller.enqueue(packet);
-                    lastFrameAtRef.current = performance.now();
-                    if (packet.type !== 'configuration') {
-                      frameCountRef.current += 1;
-                      byteCountRef.current += packet.data.byteLength;
-                    }
-                  } catch {
-                    // ignore — pipeTo failure surface via the catch below
-                  }
-                }
-                pendingBinary.length = 0;
               },
             });
             stream.pipeTo(decoder.writable).catch((err: unknown) => {
@@ -186,16 +159,8 @@ export function useScrcpyStream({ serial, res, canvasRef, paused = false }: Opti
         return;
       }
 
-      // Decoder not wired yet — buffer the raw frame and let the
-      // packetController.start() callback flush it in arrival order.
-      if (!packetController) {
-        if (pendingBinary.length < PENDING_BINARY_LIMIT) {
-          pendingBinary.push(event.data as ArrayBuffer);
-        }
-        return;
-      }
       const packet = parseStreamPacket(event.data);
-      if (!packet) return;
+      if (!packetController || !packet) return;
       if (packetStreamClosed) return;
       try {
         packetController.enqueue(packet);
