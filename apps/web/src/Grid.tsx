@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Grid2x2, LayoutGrid, MonitorSmartphone, Plus, Square, Terminal, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Grid2x2, MonitorSmartphone, Plus, Square, Terminal, X } from 'lucide-react';
 
 import { useDevicesStore } from './stores/devices';
 import { useLabelsStore } from './stores/labels';
@@ -18,7 +18,7 @@ import { downloadDeviceScreenshot } from './lib/download';
 import { useGridKeyboard } from './hooks/useGridKeyboard';
 import { useInputHistory } from './hooks/useInputHistory';
 import { useVisibleDevices } from './hooks/useVisibleDevices';
-import { COL_OPTIONS } from './lib/colOptions';
+import { SLIDER_MAX, SLIDER_MIN, tileMinPxFromCols } from './lib/colOptions';
 
 export function Grid() {
   const devices = useDevicesStore((s) => s.devices);
@@ -31,6 +31,7 @@ export function Grid() {
   const visibleSerials = useMemo(() => visible.map((d) => d.serial), [visible]);
   useGridKeyboard(visibleSerials);
   const wallboard = useLayoutStore((s) => s.wallboard);
+  const tileMinPx = tileMinPxFromCols(cols);
 
   return (
     <section
@@ -44,7 +45,6 @@ export function Grid() {
           <span className="text-zinc-500">{visible.length} tile{visible.length === 1 ? '' : 's'}</span>
           <span className="flex-1" />
           <TileSizeSlider value={cols} onChange={setCols} />
-          <ColsSelect value={cols} onChange={setCols} />
         </div>
       )}
 
@@ -53,8 +53,9 @@ export function Grid() {
           <EmptyState onAdd={() => startProvision()} hasDevices={devices.length > 0} />
         ) : (
           <div
+            data-grid-root
             className={wallboard ? 'grid gap-1' : 'grid gap-2'}
-            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${tileMinPx}px, 1fr))` }}
           >
             {visible.map((d) => (
               <Tile key={d.serial} serial={d.serial} res="thumb" />
@@ -91,183 +92,31 @@ function EmptyState({ onAdd, hasDevices }: { onAdd: () => void; hasDevices: bool
   );
 }
 
-function ColsSelect({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  const [open, setOpen] = useState(false);
-  const [highlight, setHighlight] = useState<number>(value);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  // Reset highlight to the current value every time we open.
-  useEffect(() => {
-    if (open) setHighlight(value);
-  }, [open, value]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setOpen(false);
-        return;
-      }
-      const idx = COL_OPTIONS.indexOf(highlight as (typeof COL_OPTIONS)[number]);
-      const last = COL_OPTIONS.length - 1;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setHighlight(COL_OPTIONS[Math.min(idx + 1, last)]!);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setHighlight(COL_OPTIONS[Math.max(idx - 1, 0)]!);
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        setHighlight(COL_OPTIONS[0]!);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        setHighlight(COL_OPTIONS[last]!);
-      } else if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onChange(highlight);
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open, highlight, onChange]);
-
-  // Keep the highlighted row in view when the user arrows past the fold.
-  useEffect(() => {
-    if (!open) return;
-    const el = listRef.current?.querySelector<HTMLButtonElement>(`[data-cols="${highlight}"]`);
-    el?.scrollIntoView({ block: 'nearest' });
-  }, [open, highlight]);
-
-  return (
-    <div ref={wrapRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`Grid columns: ${value}`}
-        title="Grid columns"
-        className={`group h-8 inline-flex items-center gap-2 rounded-md border pl-2 pr-1.5 font-mono text-[0.7rem] tabular-nums transition-colors duration-[140ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${
-          open
-            ? 'border-cyan-500/45 text-cyan-100'
-            : 'ui-chip-surface text-zinc-200 hover:border-zinc-700'
-        }`}
-      >
-        <LayoutGrid
-          size={12}
-          className={open ? 'text-cyan-300' : 'text-zinc-500 group-hover:text-zinc-300 transition-colors'}
-        />
-        <span className="min-w-[1.25rem] text-right">{value}</span>
-        <span
-          aria-hidden="true"
-          className={`text-[0.7rem] leading-none -mt-0.5 transition-transform duration-[180ms] ${
-            open ? 'rotate-180 text-cyan-300' : 'text-zinc-500'
-          }`}
-        >
-          ▾
-        </span>
-      </button>
-
-      {open && (
-        <>
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label="Close columns menu"
-            className="fixed inset-0 z-30"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            role="menu"
-            style={{
-              animation: 'cols-menu-in 140ms cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow:
-                '0 18px 50px -12px rgba(0,0,0,0.72), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.03)',
-            }}
-            className="absolute right-0 top-full z-40 mt-1.5 min-w-[10rem] origin-top-right rounded-md border border-zinc-700/80 ui-modal-surface backdrop-blur-md p-1"
-          >
-            <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-0.5">
-              {COL_OPTIONS.map((n) => {
-                const active = n === value;
-                const hovered = n === highlight;
-                const density = n <= 5 ? 'large' : n <= 10 ? 'medium' : n <= 16 ? 'dense' : 'fleet';
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={active}
-                    data-cols={n}
-                    onMouseEnter={() => setHighlight(n)}
-                    onClick={() => {
-                      onChange(n);
-                      setOpen(false);
-                    }}
-                    className={`relative flex w-full items-center justify-between rounded-sm pl-3 pr-2 py-1.5 text-left font-mono text-[0.72rem] tabular-nums transition-colors duration-[100ms] ${
-                      active
-                        ? 'text-cyan-100'
-                        : hovered
-                          ? 'bg-zinc-800/60 text-zinc-100'
-                          : 'text-zinc-300'
-                    }`}
-                  >
-                    {active && (
-                      <span
-                        aria-hidden
-                        className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-cyan-400"
-                      />
-                    )}
-                    <span>{n} cols</span>
-                    <span
-                      className={`text-[0.55rem] uppercase tracking-[0.16em] ${
-                        active ? 'text-cyan-300/70' : 'text-zinc-500'
-                      }`}
-                    >
-                      {density}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 function TileSizeSlider({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  // Slider semantics: drag LEFT  → tiles grow   → fewer per row (cols↓)
-  //                   drag RIGHT → tiles shrink → more per row  (cols↑)
-  // Value === cols directly. Left icon is the "big tile" end; right is the
-  // dense-grid end.
-  const MIN = 1;
-  const MAX = 32;
+  // Slider semantics: drag LEFT  → bigger tiles → fewer per row.
+  //                   drag RIGHT → smaller tiles → more per row.
+  // The integer value (1-32) maps to a tile min-width in px via
+  // tileMinPxFromCols(); the grid uses auto-fill, so rows wrap naturally as
+  // tiles overflow the container.
+  const tileMinPx = tileMinPxFromCols(value);
   return (
-    <div className="inline-flex items-center gap-1.5" title="Tile size — drag right to fit more tiles per row, left to grow them">
+    <div
+      className="inline-flex items-center gap-1.5"
+      title="Tile size — drag right to shrink tiles (more per row), left to grow them"
+    >
       <Square size={11} className="text-zinc-500" aria-hidden />
       <input
         type="range"
-        min={MIN}
-        max={MAX}
+        min={SLIDER_MIN}
+        max={SLIDER_MAX}
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label="Tile size"
-        aria-valuemin={MIN}
-        aria-valuemax={MAX}
+        aria-valuemin={SLIDER_MIN}
+        aria-valuemax={SLIDER_MAX}
         aria-valuenow={value}
-        aria-valuetext={`${value} columns`}
+        aria-valuetext={`${tileMinPx} pixels minimum tile width`}
         className="w-32 accent-cyan-500 cursor-pointer touch-target-range"
       />
       <Grid2x2 size={11} className="text-zinc-500" aria-hidden />

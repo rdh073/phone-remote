@@ -4,6 +4,13 @@ import { useControlsStore } from '../stores/controls';
 
 const NAV_KEYS = new Set(['j', 'k', 'h', 'l', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
+function measureGridCols(): number {
+  const root = document.querySelector<HTMLElement>('[data-grid-root]');
+  if (!root) return 1;
+  const tracks = getComputedStyle(root).gridTemplateColumns.split(/\s+/).filter(Boolean);
+  return Math.max(1, tracks.length);
+}
+
 export function useGridKeyboard(serials: string[]): void {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -22,7 +29,10 @@ export function useGridKeyboard(serials: string[]): void {
       const cursorIdx = state.cursorSerial
         ? serials.findIndex((serial) => serial === state.cursorSerial)
         : -1;
-      const cols = state.cols;
+      // The grid uses repeat(auto-fill, minmax(...)), so the rendered column
+      // count depends on container width — derive it from the actual track
+      // list instead of trusting the slider value.
+      const cols = measureGridCols();
 
       const moveCursor = (delta: number) => {
         const start = cursorIdx < 0 ? 0 : cursorIdx;
