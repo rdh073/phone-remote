@@ -27,15 +27,28 @@ export async function attachStreamSession(
   override: Partial<ScrcpyPreset> = {},
 ): Promise<void> {
   let detach: (() => void) | undefined;
-  let closed = false;
-  const safeClose = () => {
-    if (closed) return;
-    closed = true;
+  let socketClosed = false;
+  let teardownStarted = false;
+
+  // Register the close handler BEFORE we await attachConsumer — the pool's
+  // cold start can take 10-15s on first attach, and the browser may give up
+  // before then. Without this, the consumer leaks into pool.consumers
+  // forever and prevents the pool's grace-window teardown from firing.
+  socket.on('close', () => {
+    socketClosed = true;
     detach?.();
-    try {
-      socket.close();
-    } catch {
-      // already closing
+  });
+
+  const safeClose = () => {
+    if (teardownStarted) return;
+    teardownStarted = true;
+    detach?.();
+    if (!socketClosed) {
+      try {
+        socket.close();
+      } catch {
+        // already closing
+      }
     }
   };
 
@@ -57,17 +70,19 @@ export async function attachStreamSession(
     });
     detach = handle.detach;
 
+    // Browser may have given up during the cold start — detach immediately
+    // so the consumer doesn't sit in the pool waiting for a stream that has
+    // no recipient.
+    if (socketClosed) {
+      detach();
+      return;
+    }
+
     sendJson(socket, {
       kind: 'video-meta',
       codec: handle.meta.codec,
       width: handle.meta.width,
       height: handle.meta.height,
-    });
-
-    socket.on('close', () => {
-      // Detach from the pool; the scrcpy session stays alive for the pool's
-      // grace window so a fast reconnect skips the encoder cold start.
-      detach?.();
     });
 
     if (handle.controller) {

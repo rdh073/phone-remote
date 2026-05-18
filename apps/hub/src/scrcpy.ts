@@ -96,7 +96,15 @@ type Pool = {
   session: Session;
   meta: VideoMeta;
   controller: ScrcpyController | undefined;
+  /** Consumers that have received at least one `configuration` packet and
+   *  can decode subsequent data packets. */
   consumers: Set<ConsumerCallbacks>;
+  /** New consumers waiting to be promoted on the next `configuration`
+   *  packet (forced via `resetVideo()`). They do NOT receive data packets
+   *  while pending — without SPS/PPS the decoder can't make sense of
+   *  them. Promotion happens inside readerLoop the moment a config
+   *  arrives, after which they're folded into `consumers`. */
+  pendingConsumers: Set<ConsumerCallbacks>;
   lastConfig: ScrcpyMediaStreamPacket | null;
   graceTimer: NodeJS.Timeout | null;
   closed: boolean;
@@ -133,22 +141,18 @@ export async function attachConsumer(
     pool.graceTimer = null;
   }
 
-  pool.consumers.add(callbacks);
-
-  // Replay cached config so the decoder has SPS/PPS immediately. Then ask
-  // the encoder for a fresh keyframe so the new consumer starts decoding
-  // within one frame interval instead of waiting for the next natural one.
-  if (pool.lastConfig) {
-    try {
-      callbacks.onPacket(pool.lastConfig);
-    } catch {
-      // consumer collapse on first packet — caller's onClose/detach will tidy.
-    }
-  }
-  if (pool.controller && typeof (pool.controller as unknown as { resetVideo?: () => Promise<void> }).resetVideo === 'function') {
-    void (pool.controller as unknown as { resetVideo: () => Promise<void> })
-      .resetVideo()
-      .catch(() => {});
+  // Park as pending until the next configuration packet arrives — that
+  // gives the caller (stream.ts) a chance to send `video-meta` JSON first
+  // so the browser has a decoder ready before any binary packets land.
+  // `resetVideo()` asks the encoder to emit a fresh config + keyframe so
+  // promotion happens within one frame interval (~40-66ms) rather than
+  // waiting for the next natural keyframe (1-2s).
+  pool.pendingConsumers.add(callbacks);
+  if (pool.controller) {
+    pool.controller.resetVideo().catch(() => {
+      // best-effort: if resetVideo isn't supported, the consumer simply
+      // waits for the next natural config packet.
+    });
   }
 
   let detached = false;
@@ -156,7 +160,13 @@ export async function attachConsumer(
     if (detached) return;
     detached = true;
     pool!.consumers.delete(callbacks);
-    if (pool!.consumers.size === 0 && pools.get(key) === pool && !pool!.closed) {
+    pool!.pendingConsumers.delete(callbacks);
+    if (
+      pool!.consumers.size === 0 &&
+      pool!.pendingConsumers.size === 0 &&
+      pools.get(key) === pool &&
+      !pool!.closed
+    ) {
       pool!.graceTimer = setTimeout(() => closePool(key), GRACE_MS);
     }
   };
@@ -180,6 +190,7 @@ async function launchPool(serial: string, preset: ScrcpyPreset, key: string): Pr
     meta: { codec: video.metadata.codec, width: video.width, height: video.height },
     controller: session.controller,
     consumers: new Set(),
+    pendingConsumers: new Set(),
     lastConfig: null,
     graceTimer: null,
     closed: false,
@@ -204,6 +215,13 @@ async function readerLoop(pool: Pool, stream: ReadableStream<ScrcpyMediaStreamPa
       if (pool.closed) break;
       if (value.type === 'configuration') {
         pool.lastConfig = value;
+        // Promote pending consumers — the config they're about to receive
+        // gives the decoder the SPS/PPS it needs to interpret subsequent
+        // data packets.
+        if (pool.pendingConsumers.size > 0) {
+          for (const c of pool.pendingConsumers) pool.consumers.add(c);
+          pool.pendingConsumers.clear();
+        }
       }
       // Snapshot before iterating so a consumer-triggered detach during
       // dispatch doesn't mutate-while-iterate.
@@ -249,9 +267,10 @@ function evictPool(key: string, err: Error): void {
     clearTimeout(pool.graceTimer);
     pool.graceTimer = null;
   }
-  const consumers = Array.from(pool.consumers);
+  const all = [...pool.consumers, ...pool.pendingConsumers];
   pool.consumers.clear();
-  for (const c of consumers) {
+  pool.pendingConsumers.clear();
+  for (const c of all) {
     try {
       c.onError(err);
     } catch {
@@ -269,7 +288,8 @@ function evictPool(key: string, err: Error): void {
 function closePool(key: string): void {
   const pool = pools.get(key);
   if (!pool) return;
-  if (pool.consumers.size > 0) return; // a consumer re-attached during the grace window
+  // A consumer re-attached during the grace window — abort the teardown.
+  if (pool.consumers.size > 0 || pool.pendingConsumers.size > 0) return;
   pool.closed = true;
   pools.delete(key);
   pool.session.close().catch(() => {});
