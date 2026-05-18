@@ -1,7 +1,7 @@
 import { Grid2x2, Minimize2, Square } from 'lucide-react';
 import { useDevicesStore } from '../stores/devices';
 import { useLayoutStore } from '../stores/layout';
-import { SLIDER_MAX, SLIDER_MIN, tileMinPxFromCols } from '../lib/colOptions';
+import { SLIDER_MAX, SLIDER_MIN } from '../lib/colOptions';
 
 /**
  * Floating control for wallboard mode. Hosts the tile-size slider and Exit.
@@ -13,7 +13,6 @@ export function WallboardExitButton() {
   const setWallboard = useLayoutStore((s) => s.setWallboard);
   const cols = useDevicesStore((s) => s.cols);
   const setCols = useDevicesStore((s) => s.setCols);
-  const tileMinPx = tileMinPxFromCols(cols);
 
   return (
     <div
@@ -23,7 +22,7 @@ export function WallboardExitButton() {
     >
       <div
         className="inline-flex h-full items-center gap-1.5 px-2.5"
-        title="Tile size — drag right to shrink tiles (more per row), left to grow them"
+        title="Grid columns — drag right for more (smaller) tiles, left for fewer (bigger) tiles"
       >
         <Square size={11} className="text-zinc-500" aria-hidden />
         <input
@@ -33,11 +32,11 @@ export function WallboardExitButton() {
           step={1}
           value={cols}
           onChange={(e) => setCols(Number(e.target.value))}
-          aria-label="Tile size"
+          aria-label="Grid columns"
           aria-valuemin={SLIDER_MIN}
           aria-valuemax={SLIDER_MAX}
           aria-valuenow={cols}
-          aria-valuetext={`${tileMinPx} pixels minimum tile width`}
+          aria-valuetext={`${cols} column${cols === 1 ? '' : 's'}`}
           className="w-28 accent-cyan-500 cursor-pointer touch-target-range"
         />
         <Grid2x2 size={11} className="text-zinc-500" aria-hidden />
@@ -45,8 +44,8 @@ export function WallboardExitButton() {
           className="ml-1 inline-flex items-baseline gap-0.5 font-mono text-[0.625rem] tabular-nums text-zinc-300"
           aria-live="polite"
         >
-          <span className="text-zinc-100">{tileMinPx}</span>
-          <span className="text-zinc-500 text-[0.5625rem] uppercase tracking-[0.14em]">px</span>
+          <span className="text-zinc-100">{cols}</span>
+          <span className="text-zinc-500 text-[0.5625rem] uppercase tracking-[0.14em]">c</span>
         </span>
       </div>
       <button
